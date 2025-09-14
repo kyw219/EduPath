@@ -71,7 +71,7 @@ export default async function handler(req, res) {
             requirements: "Standard requirements",
             tuition: "$45,000",
             employment_rate: "88%",
-            reason: "补充推荐的优质项目"
+            reason: "Additional quality program recommendation"
           });
         }
       }
@@ -92,13 +92,13 @@ export default async function handler(req, res) {
             school: newSchool.school_name,
             program: newSchool.program_name,
             match_score: 60,
-            gaps: ["更强学术背景"],
-            suggestions: "提升GPA和研究经验",
+            gaps: ["Stronger academic background"],
+            suggestions: "Improve GPA and research experience",
             deadline: "2025-12-01",
             tuition: "$75,000",
-            requirements: "优秀学术背景",
+            requirements: "Excellent academic background",
             employment_rate: "96%",
-            reason: "顶级项目补充推荐"
+            reason: "Top-tier program supplementary recommendation"
           });
         }
       }
@@ -125,7 +125,7 @@ export default async function handler(req, res) {
         updatedTargetSchools: targetSchools,
         updatedReachSchools: reachSchools,
         updatedTimeline: updatedTimeline,
-        adjustmentMessage: `✅ 推荐已更新！现在有 ${targetSchools.length} 个目标学校和 ${reachSchools.length} 个冲刺学校。`
+        adjustmentMessage: `✅ Recommendations updated! You now have ${targetSchools.length} target schools and ${reachSchools.length} reach schools.`
       });
 
     } finally {
@@ -160,11 +160,11 @@ function generateSimpleTimeline(targetSchools, reachSchools) {
         color: "#3B82F6",
         tasks: [
           {
-            task: "准备申请材料",
+            task: "Prepare application materials",
             deadline: "2025-03-01",
             status: "pending",
             priority: "high",
-            reason: "为所有学校准备通用材料",
+            reason: "Prepare common materials for all schools",
             cost: "$0"
           }
         ]
@@ -174,18 +174,18 @@ function generateSimpleTimeline(targetSchools, reachSchools) {
         period: "2025-09 to 2025-12",
         color: "#8B5CF6",
         tasks: allSchools.map((school, index) => ({
-          task: `提交${school.school}申请`,
+          task: `Submit ${school.school} application`,
           deadline: school.deadline || "2025-12-01",
           status: "upcoming",
           priority: "high",
-          reason: `申请${school.school}`,
+          reason: `Apply to ${school.school}`,
           cost: "$150"
         }))
       }
     ],
     key_deadlines: allSchools.map(school => ({
       date: school.deadline || "2025-12-01",
-      event: `${school.school} 申请截止`,
+      event: `${school.school} Application Due`,
       type: "application"
     })),
     total_estimated_cost: `$${totalCost}`,

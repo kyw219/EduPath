@@ -22,35 +22,35 @@ export default async function handler(req, res) {
       properties: {
         current_major: {
           type: "string",
-          description: "用户当前的专业背景"
+          description: "User's current major/academic background"
         },
         target_field: {
           type: "string", 
-          description: "用户想申请的目标专业"
+          description: "User's target graduate program field"
         },
         additional_info: {
           type: "string",
-          description: "用户提供的其他相关信息(GPA、经验、偏好等)"
+          description: "Additional information provided by user (GPA, experience, preferences, etc.)"
         },
         has_basic_info: {
           type: "boolean",
-          description: "是否包含专业和目标专业两个基础信息"
+          description: "Whether both current major and target field are provided"
         }
       },
       required: ["current_major", "target_field", "has_basic_info"]
     };
 
     // 构建提示词
-    const systemPrompt = `你是EduPath AI助手。从用户对话中提取信息，判断是否有足够的基础信息开始分析。
+    const systemPrompt = `You are EduPath AI assistant. Extract information from user conversation and determine if there's enough basic information to start analysis.
 
-基础信息要求：
-1. 当前专业背景
-2. 目标申请专业
+Required basic information:
+1. Current major/background
+2. Target graduate program
 
-如果缺少基础信息，生成友好的追问。
-如果有基础信息，准备开始分析。
+If missing basic information, generate friendly follow-up questions.
+If basic information is complete, prepare to start analysis.
 
-请提取信息并返回JSON格式。`;
+Please extract information and return in JSON format.`;
 
     // 调用OpenAI进行信息提取
     const completion = await openai.chat.completions.create({
@@ -73,11 +73,11 @@ export default async function handler(req, res) {
     // 生成AI回复
     let aiReply;
     if (extractedData.has_basic_info) {
-      aiReply = `好的！正在基于你的信息分析最适合的项目，请稍等...
+      aiReply = `Great! Analyzing the best programs for you based on your information, please wait...
 
-🔄 正在分析你的学术背景...
-🔄 匹配最适合的学校和项目...
-🔄 生成个性化申请时间线...`;
+🔄 Analyzing your academic background...
+🔄 Matching the most suitable schools and programs...
+🔄 Generating personalized application timeline...`;
     } else {
       // 生成追问
       const followUpCompletion = await openai.chat.completions.create({
@@ -85,7 +85,7 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "system", 
-            content: "生成友好的追问，询问缺失的基础信息（当前专业或目标专业）。保持简洁友好。"
+            content: "Generate a friendly follow-up question asking for missing basic information (current major or target program). Keep it concise and friendly."
           },
           ...messages
         ]
