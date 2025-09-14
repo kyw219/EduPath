@@ -1,6 +1,7 @@
 import { AnalysisResponse, SchoolsResponse, TimelineResponse, ChatMessage } from '../types';
 
-const API_BASE = process.env.NODE_ENV === 'production' ? '' : '';
+// 本地开发和生产环境都使用相对路径（vercel dev 会处理路由）
+const API_BASE = '';
 
 // 新的智能聊天API
 export const intelligentChat = async (chatHistory: ChatMessage[]): Promise<{

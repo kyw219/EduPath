@@ -33,35 +33,24 @@ const TargetSchools: React.FC<TargetSchoolsProps> = ({ schools }) => {
       <div className="grid gap-6">
         {schools.map((school, index) => (
           <div key={index} className="bg-slate-800 rounded-xl p-6 border border-slate-700 hover:border-slate-600 transition-colors">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* School Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* School Basic Info */}
               <div>
-                <div className="flex items-center space-x-3 mb-3">
+                <div className="flex items-center space-x-3 mb-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-lg">
                       {school.school.split(' ').map(word => word[0]).join('').slice(0, 2)}
                     </span>
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-white font-semibold text-lg">{school.school}</h3>
                     <p className="text-slate-400 text-sm">{school.program}</p>
                   </div>
                 </div>
-                
-                <div className="flex items-center space-x-4 text-sm text-slate-400 mb-4">
-                  <div className="flex items-center space-x-1">
-                    <Clock className="w-4 h-4" />
-                    <span>{school.deadline}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <DollarSign className="w-4 h-4" />
-                    <span>{school.tuition}</span>
-                  </div>
-                </div>
 
-                {/* Match Score */}
-                <div className="text-center">
-                  <div className="relative w-16 h-16 mx-auto mb-2">
+                {/* Match Score - positioned under school name */}
+                <div className="mb-4">
+                  <div className="relative w-16 h-16 mb-2">
                     <div className="absolute inset-0 rounded-full bg-slate-700"></div>
                     <div 
                       className={`absolute inset-0 rounded-full bg-gradient-to-r ${getMatchScoreColor(school.match_score)}`}
@@ -75,45 +64,45 @@ const TargetSchools: React.FC<TargetSchoolsProps> = ({ schools }) => {
                   </div>
                   <p className="text-slate-400 text-xs">Match Score</p>
                 </div>
+
+                {/* School Details */}
+                <div className="space-y-3">
+                  <div>
+                    <h5 className="text-slate-400 text-xs font-medium mb-1">QS Ranking</h5>
+                    <p className="text-slate-300 text-sm">#{school.ranking || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <h5 className="text-slate-400 text-xs font-medium mb-1">Tuition</h5>
+                    <p className="text-slate-300 text-sm">{school.tuition}</p>
+                  </div>
+                  
+                  <div>
+                    <h5 className="text-slate-400 text-xs font-medium mb-1">Duration</h5>
+                    <p className="text-slate-300 text-sm">{school.duration || "2 years"}</p>
+                  </div>
+                </div>
               </div>
 
-              {/* Requirements & Reason */}
-              <div>
+              {/* Requirements */}
+              <div className="ml-4">
                 <div className="mb-4">
-                  <h4 className="text-white text-sm font-medium mb-2 flex items-center">
+                  <h4 className="text-white text-sm font-medium mb-3 flex items-center">
                     <BookOpen className="w-4 h-4 text-green-500 mr-2" />
                     Requirements
                   </h4>
-                  <p className="text-slate-300 text-sm">{school.requirements}</p>
-                </div>
-                
-                <div>
-                  <h4 className="text-white text-sm font-medium mb-2">Why This School</h4>
-                  <p className="text-slate-300 text-sm">{school.reason}</p>
-                </div>
-              </div>
-
-              {/* Program Details */}
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-white text-sm font-medium mb-2">Duration</h4>
-                  <p className="text-slate-300 text-sm">{school.duration || "2 years"}</p>
-                </div>
-
-                <div>
-                  <h4 className="text-white text-sm font-medium mb-2">Language Requirements</h4>
-                  <p className="text-slate-300 text-sm">{school.language_requirements || "TOEFL 90+ or IELTS 7.0+"}</p>
-                </div>
-
-                <div>
-                  <h4 className="text-white text-sm font-medium mb-2">Admission Requirements</h4>
-                  <p className="text-slate-300 text-sm">{school.admission_requirements || "Bachelor's degree, 3.0+ GPA recommended"}</p>
-                </div>
-
-                <div className="pt-3">
-                  <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-green-900 text-green-300">
-                    Target School
-                  </span>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <h5 className="text-slate-400 text-xs font-medium mb-1">Language Requirements</h5>
+                      <p className="text-slate-300 text-sm">{school.language_requirements || "TOEFL 90+ or IELTS 7.0+"}</p>
+                    </div>
+                    
+                    <div>
+                      <h5 className="text-slate-400 text-xs font-medium mb-1">Admission Requirements</h5>
+                      <p className="text-slate-300 text-sm">{school.admission_requirements || "Bachelor's degree, 3.0+ GPA recommended"}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

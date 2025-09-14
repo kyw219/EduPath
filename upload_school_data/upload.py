@@ -24,11 +24,18 @@ conn = pymysql.connect(
 
 print("Connected to TiDB successfully")
 
-# 读取Excel文件
-excel_path = '../data/QS_Top50_Master_Programs_Complete.xlsx'
-df = pd.read_excel(excel_path)
+# 清空现有数据
+print("Clearing existing data...")
+with conn.cursor() as cursor:
+    cursor.execute("DELETE FROM schools")
+    conn.commit()
+print("✓ Existing data cleared")
 
-print(f"Loaded {len(df)} records from Excel")
+# 读取CSV文件
+csv_path = '../data/QS_Top50_Master_Programs_VectorDB_Ready.csv'
+df = pd.read_csv(csv_path)
+
+print(f"Loaded {len(df)} records from CSV")
 
 # 处理每一行数据
 for index, row in df.iterrows():

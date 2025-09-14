@@ -7,13 +7,12 @@ export interface School {
   school: string;
   program: string;
   match_score: number;
+  ranking: number;
   deadline: string;
-  requirements: string;
   tuition: string;
   duration: string;
   language_requirements: string;
   admission_requirements: string;
-  reason: string;
   gaps?: string[];
   suggestions?: string;
 }

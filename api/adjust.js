@@ -54,7 +54,7 @@ export default async function handler(req, res) {
       if (targetSchools.length < 2) {
         // 从数据库补充一个target school
         const [supplementRows] = await connection.execute(`
-          SELECT school_name, program_name, country_region, qs_ranking
+          SELECT school_name, program_name, country_region, qs_ranking, duration
           FROM schools 
           WHERE qs_ranking BETWEEN 20 AND 50
           ORDER BY RAND()
@@ -67,13 +67,12 @@ export default async function handler(req, res) {
             school: newSchool.school_name,
             program: newSchool.program_name,
             match_score: 75,
+            ranking: newSchool.qs_ranking,
             deadline: "2025-02-01",
-            requirements: "Standard requirements",
             tuition: "$45,000",
-            duration: "2 years",
+            duration: newSchool.duration || "2 years",
             language_requirements: "TOEFL 90+ or IELTS 7.0+",
-            admission_requirements: "Bachelor's degree, 3.0+ GPA recommended",
-            reason: "Additional quality program recommendation"
+            admission_requirements: "Bachelor's degree, 3.0+ GPA recommended"
           });
         }
       }
@@ -81,7 +80,7 @@ export default async function handler(req, res) {
       if (reachSchools.length < 2) {
         // 从数据库补充一个reach school
         const [supplementRows] = await connection.execute(`
-          SELECT school_name, program_name, country_region, qs_ranking
+          SELECT school_name, program_name, country_region, qs_ranking, duration
           FROM schools 
           WHERE qs_ranking <= 15
           ORDER BY RAND()
@@ -94,15 +93,14 @@ export default async function handler(req, res) {
             school: newSchool.school_name,
             program: newSchool.program_name,
             match_score: 60,
+            ranking: newSchool.qs_ranking,
             gaps: ["Stronger academic background"],
             suggestions: "Improve GPA and research experience",
             deadline: "2025-12-01",
             tuition: "$75,000",
-            duration: "2 years",
+            duration: newSchool.duration || "2 years",
             language_requirements: "TOEFL 100+ or IELTS 7.5+",
-            admission_requirements: "Strong academic background, research experience preferred",
-            requirements: "Excellent academic background",
-            reason: "Top-tier program supplementary recommendation"
+            admission_requirements: "Strong academic background, research experience preferred"
           });
         }
       }
