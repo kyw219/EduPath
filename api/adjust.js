@@ -70,7 +70,9 @@ export default async function handler(req, res) {
             deadline: "2025-02-01",
             requirements: "Standard requirements",
             tuition: "$45,000",
-            employment_rate: "88%",
+            duration: "2 years",
+            language_requirements: "TOEFL 90+ or IELTS 7.0+",
+            admission_requirements: "Bachelor's degree, 3.0+ GPA recommended",
             reason: "Additional quality program recommendation"
           });
         }
@@ -96,8 +98,10 @@ export default async function handler(req, res) {
             suggestions: "Improve GPA and research experience",
             deadline: "2025-12-01",
             tuition: "$75,000",
+            duration: "2 years",
+            language_requirements: "TOEFL 100+ or IELTS 7.5+",
+            admission_requirements: "Strong academic background, research experience preferred",
             requirements: "Excellent academic background",
-            employment_rate: "96%",
             reason: "Top-tier program supplementary recommendation"
           });
         }

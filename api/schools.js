@@ -58,10 +58,12 @@ export default async function handler(req, res) {
         school: row.school_name,
         program: row.program_name,
         match_score: Math.round((1 - row.similarity) * 100),
-        deadline: "2025-01-15", // 示例数据
+        deadline: "2025-01-15",
         requirements: "Basic background sufficient",
         tuition: "$43,000",
-        employment_rate: "92%",
+        duration: row.duration || "2 years",
+        language_requirements: "TOEFL 90+ or IELTS 7.0+",
+        admission_requirements: "Bachelor's degree, 3.0+ GPA recommended",
         reason: `Great match for your background in ${row.country_region}`
       }));
 
@@ -85,8 +87,10 @@ export default async function handler(req, res) {
         suggestions: "Complete prerequisite courses and gain research experience",
         deadline: "2025-12-01",
         tuition: "$77,000",
+        duration: row.duration || "2 years",
+        language_requirements: "TOEFL 100+ or IELTS 7.5+",
+        admission_requirements: "Strong academic background, research experience preferred",
         requirements: "Strong academic background required",
-        employment_rate: "98%",
         reason: `Top-tier program at ${row.school_name}`
       }));
 

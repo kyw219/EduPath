@@ -10,7 +10,9 @@ export interface School {
   deadline: string;
   requirements: string;
   tuition: string;
-  employment_rate: string;
+  duration: string;
+  language_requirements: string;
+  admission_requirements: string;
   reason: string;
   gaps?: string[];
   suggestions?: string;

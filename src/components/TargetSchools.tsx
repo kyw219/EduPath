@@ -93,26 +93,21 @@ const TargetSchools: React.FC<TargetSchoolsProps> = ({ schools }) => {
                 </div>
               </div>
 
-              {/* Stats & Status */}
+              {/* Program Details */}
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-white text-sm font-medium mb-2">Employment Rate</h4>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex-1 bg-slate-700 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full" 
-                        style={{ width: school.employment_rate }}
-                      ></div>
-                    </div>
-                    <span className="text-slate-300 text-sm">{school.employment_rate}</span>
-                  </div>
+                  <h4 className="text-white text-sm font-medium mb-2">Duration</h4>
+                  <p className="text-slate-300 text-sm">{school.duration || "2 years"}</p>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  {getStatusIcon(school.match_score)}
-                  <span className="text-slate-300 text-sm">
-                    {school.match_score >= 80 ? 'Highly Recommended' : 'Recommended'}
-                  </span>
+                <div>
+                  <h4 className="text-white text-sm font-medium mb-2">Language Requirements</h4>
+                  <p className="text-slate-300 text-sm">{school.language_requirements || "TOEFL 90+ or IELTS 7.0+"}</p>
+                </div>
+
+                <div>
+                  <h4 className="text-white text-sm font-medium mb-2">Admission Requirements</h4>
+                  <p className="text-slate-300 text-sm">{school.admission_requirements || "Bachelor's degree, 3.0+ GPA recommended"}</p>
                 </div>
 
                 <div className="pt-3">
