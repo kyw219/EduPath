@@ -40,7 +40,7 @@ Rules:
 - Return ONLY the JSON object, no additional text`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 500,
       temperature: 0.1
