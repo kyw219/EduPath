@@ -47,20 +47,40 @@ async function structureSchoolData(schoolData) {
         content: "You are a data extraction expert. Extract information from university program details and return ONLY valid JSON. No markdown, no explanations, just pure JSON."
       }, {
         role: "user", 
-        content: `Extract structured information from this university program:
+        content: `Extract structured information from this university program using ALL available data:
 
-School: ${schoolData.school_name}
-Program: ${schoolData.program_name}
-Details: ${schoolData.program_details || 'No details available'}
+SCHOOL INFORMATION:
+- School: ${schoolData.school_name}
+- Country/Region: ${schoolData.country_region}
+- QS Ranking: ${schoolData.qs_ranking}
 
-Return a JSON object with exactly these fields:
+PROGRAM INFORMATION:
+- Program Name: ${schoolData.program_name}
+- Degree Type: ${schoolData.degree_type}
+- Duration: ${schoolData.duration}
+- Broad Category: ${schoolData.broad_category}
+- Specific Field: ${schoolData.specific_field}
+
+DETAILED PROGRAM INFORMATION:
+${schoolData.program_details || 'No detailed program information available'}
+
+EXISTING LANGUAGE REQUIREMENTS (if any):
+${schoolData.language_requirements || 'Not specified in database'}
+
+ADDITIONAL CONTEXT:
+- Program URL: ${schoolData.program_url || 'Not available'}
+- Graduate School URL: ${schoolData.graduate_school_url || 'Not available'}
+
+Based on ALL the above information, extract and return a JSON object with exactly these fields:
 {
-  "tuition": "amount in USD or estimate",
-  "language_requirements": "TOEFL/IELTS requirements",
-  "admission_requirements": "GPA and degree requirements",
-  "prerequisites": "prerequisite courses",
-  "other_requirements": "additional requirements"
-}`
+  "tuition": "extracted/estimated tuition amount in USD format",
+  "language_requirements": "specific TOEFL/IELTS requirements",
+  "admission_requirements": "GPA, degree, and academic requirements",
+  "prerequisites": "prerequisite courses or background needed",
+  "other_requirements": "work experience, portfolio, tests, or other special requirements"
+}
+
+IMPORTANT: Use the detailed program information to provide accurate, specific requirements rather than generic ones.`
       }],
       response_format: { type: "json_object" }, // 强制 JSON 输出
       max_tokens: 400,
@@ -149,11 +169,12 @@ export default async function handler(req, res) {
 
       console.log('🔄 执行向量搜索...');
 
-      // 搜索 target schools (相似度高的)
+      // 搜索 target schools (相似度高的) - 获取完整信息
       const [targetRows] = await connection.execute(`
         SELECT 
-          id, school_name, program_name, country_region,
-          qs_ranking, degree_type, duration, program_details,
+          id, school_name, program_name, country_region, broad_category, specific_field,
+          qs_ranking, degree_type, duration, program_details, language_requirements,
+          program_url, graduate_school_url, crawl_status,
           VEC_COSINE_DISTANCE(embedding, ?) AS similarity
         FROM schools 
         ORDER BY similarity ASC 
@@ -178,11 +199,12 @@ export default async function handler(req, res) {
         };
       }));
 
-      // 搜索 reach schools (排名更高的学校)
+      // 搜索 reach schools (排名更高的学校) - 获取完整信息
       const [reachRows] = await connection.execute(`
         SELECT 
-          id, school_name, program_name, country_region,
-          qs_ranking, degree_type, duration, program_details,
+          id, school_name, program_name, country_region, broad_category, specific_field,
+          qs_ranking, degree_type, duration, program_details, language_requirements,
+          program_url, graduate_school_url, crawl_status,
           VEC_COSINE_DISTANCE(embedding, ?) AS similarity
         FROM schools 
         WHERE qs_ranking <= 20

@@ -58,32 +58,42 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
     return `Master of Science in ${program}`;
   };
 
-  // Mock qualification data - this would come from API
+  // 简单状态计算函数
+  const calculateStatus = (requirement: string): QualificationItem['status'] => {
+    if (!requirement || requirement.toLowerCase().includes('not required') || requirement.toLowerCase().includes('not specified')) {
+      return 'met';
+    }
+    if (requirement.toLowerCase().includes('preferred') || requirement.toLowerCase().includes('recommended')) {
+      return 'partial';
+    }
+    return 'not_met'; // 默认需要满足
+  };
+
+  // 基于真实数据生成 qualification data
   const qualificationData: QualificationItem[] = [
     {
       name: 'English Proficiency',
-      status: 'met',
-      userValue: 'TOEFL 105',
-      requiredValue: 'TOEFL 90+ or IELTS 7.0+'
+      status: calculateStatus(school.language_requirements),
+      userValue: 'TOEFL 105', // 这个应该来自用户档案
+      requiredValue: school.language_requirements
     },
     {
       name: 'Academic Prerequisites',
-      status: 'partial',
-      userValue: 'GPA 3.2',
-      requiredValue: "Bachelor's degree, 3.5+ GPA"
+      status: calculateStatus(school.admission_requirements),
+      userValue: 'GPA 3.2', // 这个应该来自用户档案
+      requiredValue: school.admission_requirements
     },
     {
-      name: 'Work Experience',
-      status: 'not_met',
-      userValue: '1 year',
-      requiredValue: '2+ years preferred'
+      name: 'Prerequisites',
+      status: calculateStatus(school.prerequisites || 'Not specified'),
+      requiredValue: school.prerequisites || 'Not specified'
     },
     {
-      name: 'Portfolio Submission',
-      status: 'met',
-      requiredValue: 'Not required'
+      name: 'Other Requirements',
+      status: calculateStatus(school.other_requirements || 'Not specified'),
+      requiredValue: school.other_requirements || 'Not specified'
     }
-  ];
+  ].filter(item => item.requiredValue !== 'Not specified'); // 过滤掉空值
 
   // Get qualification status indicator
   const getQualificationIndicator = (status: QualificationItem['status']) => {

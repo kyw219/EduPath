@@ -13,6 +13,8 @@ export interface School {
   duration: string;
   language_requirements: string;
   admission_requirements: string;
+  prerequisites?: string;
+  other_requirements?: string;
   gaps?: string[];
   suggestions?: string;
 }
