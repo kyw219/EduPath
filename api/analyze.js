@@ -23,26 +23,23 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { chatHistory } = req.body;
+    const { userProfile } = req.body;
 
-    if (!chatHistory || !Array.isArray(chatHistory)) {
-      return res.status(400).json({ error: 'Invalid chat history' });
+    if (!userProfile) {
+      return res.status(400).json({ error: 'Invalid user profile' });
     }
 
     // 生成 session_id
     const sessionId = uuidv4();
 
-    // 提取用户信息
-    const userMessages = chatHistory
-      .filter(msg => msg.role === 'user')
-      .map(msg => msg.content);
-    const userProfile = userMessages.join(' ');
+    // 使用传入的用户档案
+    const profileText = `${userProfile.current_major} ${userProfile.target_field} ${userProfile.additional_info || ''}`;
 
     console.log('🔄 向量化用户档案...');
     
     // 向量化用户档案
     const embeddingResponse = await openai.embeddings.create({
-      input: userProfile,
+      input: profileText,
       model: 'text-embedding-ada-002',
     });
 
@@ -60,8 +57,8 @@ export default async function handler(req, res) {
         ) VALUES (?, ?, ?, ?, ?)`,
         [
           sessionId,
-          JSON.stringify(chatHistory),
-          userProfile,
+          JSON.stringify([]),  // 空的聊天记录，因为我们现在直接传用户档案
+          profileText,
           JSON.stringify(profileVector),
           'analyzed'
         ]

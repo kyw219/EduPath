@@ -2,13 +2,35 @@ import { AnalysisResponse, SchoolsResponse, TimelineResponse, ChatMessage } from
 
 const API_BASE = process.env.NODE_ENV === 'production' ? '' : '';
 
-export const analyzeChat = async (chatHistory: ChatMessage[]): Promise<AnalysisResponse> => {
+// 新的智能聊天API
+export const intelligentChat = async (chatHistory: ChatMessage[]): Promise<{
+  reply: string;
+  extractedProfile: any;
+  hasBasicInfo: boolean;
+  shouldAnalyze: boolean;
+}> => {
+  const response = await fetch(`${API_BASE}/api/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ messages: chatHistory }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+export const analyzeChat = async (userProfile: any): Promise<AnalysisResponse> => {
   const response = await fetch(`${API_BASE}/api/analyze`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ chatHistory }),
+    body: JSON.stringify({ userProfile }),
   });
 
   if (!response.ok) {
@@ -30,6 +52,34 @@ export const getSchools = async (analysisId: string): Promise<SchoolsResponse> =
 
 export const getTimeline = async (analysisId: string): Promise<TimelineResponse> => {
   const response = await fetch(`${API_BASE}/api/timeline?analysisId=${analysisId}`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+// 学校调整API
+export const adjustSchools = async (
+  analysisId: string, 
+  action: string, 
+  schoolId: number, 
+  schoolType: string
+): Promise<{
+  success: boolean;
+  updatedTargetSchools: any[];
+  updatedReachSchools: any[];
+  updatedTimeline: any;
+  adjustmentMessage: string;
+}> => {
+  const response = await fetch(`${API_BASE}/api/adjust`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ analysisId, action, schoolId, schoolType }),
+  });
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);

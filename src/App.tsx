@@ -6,14 +6,22 @@ import TargetSchools from './components/TargetSchools';
 import ReachSchools from './components/ReachSchools';
 import Timeline from './components/Timeline';
 import { ChatMessage, SchoolsResponse, TimelineResponse } from './types';
-import { analyzeChat, getSchools, getTimeline } from './api/realApi';
+import { intelligentChat, analyzeChat, getSchools, getTimeline, adjustSchools } from './api/realApi';
 
 function App() {
   const [activeTab, setActiveTab] = useState('target');
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'Hi! Tell me: your current major, target field, GPA, and any relevant experience in one sentence.'
+      content: `Hi! 欢迎来到EduPath AI！👋 
+
+我需要了解两个基本信息来为你推荐最适合的学校：
+1️⃣ 你现在的专业背景是什么？
+2️⃣ 你想申请什么专业的研究生？
+
+当然，如果你还能告诉我更多信息就更棒了！比如：GPA、相关经验、地区偏好、预算范围等等。信息越详细，我的推荐就越精准 🎯
+
+请一次性告诉我这些信息吧！`
     }
   ]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -24,56 +32,72 @@ function App() {
 
   const handleSendMessage = async (message: string) => {
     const newUserMessage: ChatMessage = { role: 'user', content: message };
-    setMessages(prev => [...prev, newUserMessage]);
+    const updatedMessages = [...messages, newUserMessage];
+    setMessages(updatedMessages);
     
-    // Check if we should trigger analysis
-    if (messages.length >= 2 && !analysisId) {
-      setIsAnalyzing(true);
-      
+    if (!analysisId) {
       try {
-        // Analyze chat
-        const analysisResponse = await analyzeChat([...messages, newUserMessage]);
-        setAnalysisId(analysisResponse.analysis_id);
+        // 使用新的智能聊天API
+        const chatResponse = await intelligentChat(updatedMessages);
         
+        // 添加AI回复
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: analysisResponse.message
+          content: chatResponse.reply
         }]);
-
-        // Get schools data
-        const schools = await getSchools(analysisResponse.analysis_id);
-        setSchoolsData(schools);
         
-        // Get timeline data
-        const timeline = await getTimeline(analysisResponse.analysis_id);
-        setTimelineData(timeline);
+        // 如果有足够信息，开始分析
+        if (chatResponse.shouldAnalyze) {
+          setIsAnalyzing(true);
+          
+          try {
+            // 分析用户档案
+            const analysisResponse = await analyzeChat(chatResponse.extractedProfile);
+            setAnalysisId(analysisResponse.analysis_id);
+            
+            // 获取学校推荐
+            const schools = await getSchools(analysisResponse.analysis_id);
+            setSchoolsData(schools);
+            
+            // 获取时间线
+            const timeline = await getTimeline(analysisResponse.analysis_id);
+            setTimelineData(timeline);
 
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: `Great! I've analyzed your profile and found ${schools.target_schools.length} target schools and ${schools.reach_schools.length} reach schools that match your criteria. Check out the recommendations in the Target Schools and Reach Schools tabs!`
-        }]);
+            // 发送完成消息
+            setMessages(prev => [...prev, {
+              role: 'assistant',
+              content: `✅ 分析完成！我为你找到了 ${schools.target_schools.length} 个目标学校和 ${schools.reach_schools.length} 个冲刺学校。
 
-        // Switch to target schools view after analysis
-        setTimeout(() => {
-          setActiveTab('target');
-          setShowChat(false);
-        }, 2000);
+📚 查看匹配学校推荐 → 点击左侧 'Target Schools' 和 'Reach Schools'
+📅 查看个性化申请时间线 → 点击左侧 'Timeline'
 
+这些推荐都是根据你的背景量身定制的！`
+            }]);
+
+            // 自动跳转到结果页面
+            setTimeout(() => {
+              setActiveTab('target');
+              setShowChat(false);
+            }, 3000);
+
+          } catch (error) {
+            console.error('Analysis failed:', error);
+            setMessages(prev => [...prev, {
+              role: 'assistant',
+              content: '抱歉，分析过程中出现了问题，请重试。'
+            }]);
+          } finally {
+            setIsAnalyzing(false);
+          }
+        }
+        
       } catch (error) {
-        console.error('Analysis failed:', error);
+        console.error('Chat failed:', error);
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: 'Sorry, there was an error analyzing your profile. Please try again.'
+          content: '抱歉，出现了问题，请重试。'
         }]);
-      } finally {
-        setIsAnalyzing(false);
       }
-    } else if (messages.length === 1) {
-      // Ask follow-up question
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Got it! Any location/budget preferences?'
-      }]);
     }
   };
 
