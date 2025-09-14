@@ -1,0 +1,15 @@
+{
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "OPENAI_API_KEY": "@openai-api-key",
+    "TIDB_HOST": "@tidb-host",
+    "TIDB_PORT": "@tidb-port", 
+    "TIDB_USER": "@tidb-user",
+    "TIDB_PASSWORD": "@tidb-password",
+    "TIDB_DATABASE": "@tidb-database"
+  }
+}

@@ -138,6 +138,14 @@ const mockTimelineData: TimelineResponse = {
   completion_rate: 0
 };
 
+export const analyzeChat = async (chatHistory: ChatMessage[]): Promise<AnalysisResponse> => {
+  await delay(1500);
+  return {
+    analysis_id: "abc123",
+    status: "analyzing",
+    message: "Analyzing 50+ programs based on your profile..."
+  };
+};
 
 export const getSchools = async (analysisId: string): Promise<SchoolsResponse> => {
   await delay(2000);

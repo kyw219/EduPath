@@ -6,7 +6,7 @@ import TargetSchools from './components/TargetSchools';
 import ReachSchools from './components/ReachSchools';
 import Timeline from './components/Timeline';
 import { ChatMessage, SchoolsResponse, TimelineResponse } from './types';
-import { analyzeChat, getSchools, getTimeline } from './api/mockApi';
+import { analyzeChat, getSchools, getTimeline } from './api/realApi';
 
 function App() {
   const [activeTab, setActiveTab] = useState('target');
