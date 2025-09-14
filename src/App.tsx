@@ -13,15 +13,15 @@ function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: `Hi! 欢迎来到EduPath AI！👋 
+      content: `Hi! Welcome to EduPath AI! 👋 
 
-我需要了解两个基本信息来为你推荐最适合的学校：
-1️⃣ 你现在的专业背景是什么？
-2️⃣ 你想申请什么专业的研究生？
+I need two basic pieces of information to recommend the best schools for you:
+1️⃣ What's your current major/background?
+2️⃣ What graduate program are you targeting?
 
-当然，如果你还能告诉我更多信息就更棒了！比如：GPA、相关经验、地区偏好、预算范围等等。信息越详细，我的推荐就越精准 🎯
+Of course, the more you tell me, the better! For example: GPA, relevant experience, location preferences, budget, etc. The more detailed your information, the more precise my recommendations will be 🎯
 
-请一次性告诉我这些信息吧！`
+Please share all this information at once!`
     }
   ]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -66,12 +66,12 @@ function App() {
             // 发送完成消息
             setMessages(prev => [...prev, {
               role: 'assistant',
-              content: `✅ 分析完成！我为你找到了 ${schools.target_schools.length} 个目标学校和 ${schools.reach_schools.length} 个冲刺学校。
+              content: `✅ Analysis complete! I found ${schools.target_schools.length} target schools and ${schools.reach_schools.length} reach schools for you.
 
-📚 查看匹配学校推荐 → 点击左侧 'Target Schools' 和 'Reach Schools'
-📅 查看个性化申请时间线 → 点击左侧 'Timeline'
+📚 View school recommendations → Click 'Target Schools' and 'Reach Schools' on the left
+📅 View your personalized timeline → Click 'Timeline' on the left
 
-这些推荐都是根据你的背景量身定制的！`
+All recommendations are tailored specifically to your background!`
             }]);
 
             // 自动跳转到结果页面
@@ -84,7 +84,7 @@ function App() {
             console.error('Analysis failed:', error);
             setMessages(prev => [...prev, {
               role: 'assistant',
-              content: '抱歉，分析过程中出现了问题，请重试。'
+              content: 'Sorry, there was an error during analysis. Please try again.'
             }]);
           } finally {
             setIsAnalyzing(false);
@@ -95,7 +95,7 @@ function App() {
         console.error('Chat failed:', error);
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: '抱歉，出现了问题，请重试。'
+          content: 'Sorry, something went wrong. Please try again.'
         }]);
       }
     }
