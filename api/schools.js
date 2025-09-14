@@ -15,42 +15,84 @@ const dbConfig = {
   ssl: { rejectUnauthorized: false }
 };
 
+// 清理 GPT 响应，移除 Markdown 标记
+function cleanGPTResponse(response) {
+  let cleaned = response.trim();
+  
+  // 移除开头的 ```json 或 ```
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.substring(7);
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.substring(3);
+  }
+  
+  // 移除结尾的 ```
+  if (cleaned.endsWith('```')) {
+    cleaned = cleaned.substring(0, cleaned.length - 3);
+  }
+  
+  return cleaned.trim();
+}
+
 // LLM 结构化数据函数
 async function structureSchoolData(schoolData) {
   try {
-    const prompt = `Please extract and structure the following school program information into a standardized JSON format:
+    console.log(`🔄 正在结构化学校数据: ${schoolData.school_name} - ${schoolData.program_name}`);
+    
+    // 使用 JSON Schema 结构化输出（OpenAI 最新功能）
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{
+        role: "system",
+        content: "You are a data extraction expert. Extract information from university program details and return ONLY valid JSON. No markdown, no explanations, just pure JSON."
+      }, {
+        role: "user", 
+        content: `Extract structured information from this university program:
 
 School: ${schoolData.school_name}
 Program: ${schoolData.program_name}
-Raw Program Details: ${schoolData.program_details}
+Details: ${schoolData.program_details || 'No details available'}
 
-Please extract and return ONLY a valid JSON object with this exact structure:
+Return a JSON object with exactly these fields:
 {
-  "tuition": "extracted tuition amount or estimate based on country/ranking",
-  "language_requirements": "extracted TOEFL/IELTS requirements",
-  "admission_requirements": "extracted GPA and degree requirements", 
-  "prerequisites": "extracted prerequisite courses if any",
-  "other_requirements": "extracted additional requirements like work experience, portfolio, etc."
-}
-
-Rules:
-- If tuition is not found, estimate based on country and ranking
-- If language requirements not found, use standard requirements for the country
-- Keep responses concise and professional
-- Return ONLY the JSON object, no additional text`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 500,
-      temperature: 0.1
+  "tuition": "amount in USD or estimate",
+  "language_requirements": "TOEFL/IELTS requirements",
+  "admission_requirements": "GPA and degree requirements",
+  "prerequisites": "prerequisite courses",
+  "other_requirements": "additional requirements"
+}`
+      }],
+      response_format: { type: "json_object" }, // 强制 JSON 输出
+      max_tokens: 400,
+      temperature: 0
     });
 
-    const structuredData = JSON.parse(completion.choices[0].message.content);
+    let responseContent = completion.choices[0].message.content;
+    console.log(`📝 GPT 原始响应: ${responseContent.substring(0, 200)}...`);
+    
+    // 清理响应
+    responseContent = cleanGPTResponse(responseContent);
+    console.log(`🧹 清理后响应: ${responseContent.substring(0, 200)}...`);
+    
+    // 解析 JSON
+    const structuredData = JSON.parse(responseContent);
+    console.log(`✅ 结构化成功: ${schoolData.school_name}`);
+    
+    // 验证必需字段
+    const requiredFields = ['tuition', 'language_requirements', 'admission_requirements'];
+    for (const field of requiredFields) {
+      if (!structuredData[field]) {
+        console.log(`⚠️ 缺少字段 ${field}，使用默认值`);
+        structuredData[field] = getDefaultValue(field);
+      }
+    }
+    
     return structuredData;
     
   } catch (error) {
-    console.error('❌ LLM结构化失败:', error);
+    console.error('❌ LLM结构化失败:', error.message);
+    console.error('❌ 错误详情:', error);
+    
     // 返回默认结构
     return {
       tuition: "$50,000",
@@ -60,6 +102,18 @@ Rules:
       other_requirements: "Strong academic background"
     };
   }
+}
+
+// 获取默认值
+function getDefaultValue(field) {
+  const defaults = {
+    tuition: "$50,000",
+    language_requirements: "TOEFL 90+ or IELTS 7.0+",
+    admission_requirements: "Bachelor's degree, 3.0+ GPA recommended",
+    prerequisites: "Relevant undergraduate coursework",
+    other_requirements: "Strong academic background"
+  };
+  return defaults[field] || "Not specified";
 }
 
 export default async function handler(req, res) {

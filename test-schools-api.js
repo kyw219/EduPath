@@ -30,9 +30,13 @@ async function testSchoolsAPI() {
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     console.log('2. 测试 Schools API（使用真实数据 + LLM 结构化）...');
+    console.log('⏳ 请等待 LLM 处理数据...');
+    
     const schoolsResponse = await fetch(`${BASE_URL}/api/schools?analysisId=${analyzeData.analysis_id}`);
     
     if (!schoolsResponse.ok) {
+      const errorText = await schoolsResponse.text();
+      console.error('❌ Schools API 响应错误:', errorText);
       throw new Error(`Schools API error: ${schoolsResponse.status}`);
     }
     
