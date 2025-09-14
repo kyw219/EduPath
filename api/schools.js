@@ -1,4 +1,9 @@
 import mysql from 'mysql2/promise';
+import { OpenAI } from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // 数据库连接配置
 const dbConfig = {
@@ -9,6 +14,53 @@ const dbConfig = {
   database: process.env.TIDB_DATABASE,
   ssl: { rejectUnauthorized: false }
 };
+
+// LLM 结构化数据函数
+async function structureSchoolData(schoolData) {
+  try {
+    const prompt = `Please extract and structure the following school program information into a standardized JSON format:
+
+School: ${schoolData.school_name}
+Program: ${schoolData.program_name}
+Raw Program Details: ${schoolData.program_details}
+
+Please extract and return ONLY a valid JSON object with this exact structure:
+{
+  "tuition": "extracted tuition amount or estimate based on country/ranking",
+  "language_requirements": "extracted TOEFL/IELTS requirements",
+  "admission_requirements": "extracted GPA and degree requirements", 
+  "prerequisites": "extracted prerequisite courses if any",
+  "other_requirements": "extracted additional requirements like work experience, portfolio, etc."
+}
+
+Rules:
+- If tuition is not found, estimate based on country and ranking
+- If language requirements not found, use standard requirements for the country
+- Keep responses concise and professional
+- Return ONLY the JSON object, no additional text`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5-mini",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 500,
+      temperature: 0.1
+    });
+
+    const structuredData = JSON.parse(completion.choices[0].message.content);
+    return structuredData;
+    
+  } catch (error) {
+    console.error('❌ LLM结构化失败:', error);
+    // 返回默认结构
+    return {
+      tuition: "$50,000",
+      language_requirements: "TOEFL 90+ or IELTS 7.0+",
+      admission_requirements: "Bachelor's degree, 3.0+ GPA recommended",
+      prerequisites: "Relevant undergraduate coursework",
+      other_requirements: "Strong academic background"
+    };
+  }
+}
 
 export default async function handler(req, res) {
   // 只允许 GET 请求
@@ -54,16 +106,22 @@ export default async function handler(req, res) {
         LIMIT 3
       `, [userVector]);
 
-      const targetSchools = targetRows.map(row => ({
-        school: row.school_name,
-        program: row.program_name,
-        match_score: Math.round((1 - row.similarity) * 100),
-        ranking: row.qs_ranking,
-        deadline: "2025-01-15",
-        tuition: "$43,000",
-        duration: row.duration || "2 years",
-        language_requirements: "TOEFL 90+ or IELTS 7.0+",
-        admission_requirements: "Bachelor's degree, 3.0+ GPA recommended"
+      // 使用 LLM 结构化 target schools 数据
+      const targetSchools = await Promise.all(targetRows.map(async row => {
+        const structuredData = await structureSchoolData(row);
+        return {
+          school: row.school_name,
+          program: row.program_name,
+          match_score: Math.round((1 - row.similarity) * 100),
+          ranking: row.qs_ranking,
+          deadline: "2025-01-15", // 这个可以后续也从数据中提取
+          tuition: structuredData.tuition,
+          duration: row.duration || "2 years",
+          language_requirements: structuredData.language_requirements,
+          admission_requirements: structuredData.admission_requirements,
+          prerequisites: structuredData.prerequisites,
+          other_requirements: structuredData.other_requirements
+        };
       }));
 
       // 搜索 reach schools (排名更高的学校)
@@ -78,18 +136,24 @@ export default async function handler(req, res) {
         LIMIT 2
       `, [userVector]);
 
-      const reachSchools = reachRows.map(row => ({
-        school: row.school_name,
-        program: row.program_name,
-        match_score: Math.max(50, Math.round((1 - row.similarity) * 100) - 20),
-        ranking: row.qs_ranking,
-        gaps: ["Advanced Math", "Research Experience"],
-        suggestions: "Complete prerequisite courses and gain research experience",
-        deadline: "2025-12-01",
-        tuition: "$77,000",
-        duration: row.duration || "2 years",
-        language_requirements: "TOEFL 100+ or IELTS 7.5+",
-        admission_requirements: "Strong academic background, research experience preferred"
+      // 使用 LLM 结构化 reach schools 数据
+      const reachSchools = await Promise.all(reachRows.map(async row => {
+        const structuredData = await structureSchoolData(row);
+        return {
+          school: row.school_name,
+          program: row.program_name,
+          match_score: Math.max(50, Math.round((1 - row.similarity) * 100) - 20),
+          ranking: row.qs_ranking,
+          gaps: ["Advanced Math", "Research Experience"], // 这个可以后续也用 LLM 生成
+          suggestions: "Complete prerequisite courses and gain research experience",
+          deadline: "2025-12-01",
+          tuition: structuredData.tuition,
+          duration: row.duration || "2 years", 
+          language_requirements: structuredData.language_requirements,
+          admission_requirements: structuredData.admission_requirements,
+          prerequisites: structuredData.prerequisites,
+          other_requirements: structuredData.other_requirements
+        };
       }));
 
       // 更新数据库存储匹配结果

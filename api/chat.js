@@ -54,7 +54,7 @@ Please extract information and return in JSON format.`;
 
     // 调用OpenAI进行信息提取
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5-mini",
       messages: [
         { role: "system", content: systemPrompt },
         ...messages
@@ -81,7 +81,7 @@ Please extract information and return in JSON format.`;
     } else {
       // 生成追问
       const followUpCompletion = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-5-mini",
         messages: [
           {
             role: "system", 
