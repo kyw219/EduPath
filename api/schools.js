@@ -80,8 +80,11 @@ IMPORTANT:
 - For language: Use the exact TOEFL/IELTS scores from language_requirements field
 - For degree: Extract specific degree requirements (Engineering, Science, etc.)
 - For other: Include GRE scores, work experience, research experience mentioned
-- DO NOT use generic phrases like "No specific requirement" - extract actual details from the text
-- If truly no information exists, then use "Not specified"`
+- NEVER use phrases like "No specific requirement", "Not specified", "Not mentioned"
+- ALWAYS extract concrete details from the program_details text
+- For GPA: If no GPA mentioned, extract transcript or academic performance requirements
+- For prerequisites: MUST extract specific course names from program_details
+- If absolutely no information exists, use "Information not available in source"`
       }],
       response_format: { type: "json_object" }, // 强制 JSON 输出
       max_tokens: 600,
@@ -102,7 +105,7 @@ IMPORTANT:
     // 验证必需字段
     const requiredFields = ['tuition', 'gpa_requirement', 'language_requirement', 'prerequisite_courses', 'degree_requirement', 'other_requirements'];
     for (const field of requiredFields) {
-      if (!structuredData[field]) {
+      if (structuredData[field] === undefined || structuredData[field] === null) {
         console.log(`⚠️ 缺少字段 ${field}，使用默认值`);
         structuredData[field] = getDefaultValue(field);
       }
@@ -137,7 +140,7 @@ function getDefaultValue(field) {
     degree_requirement: "Bachelor's degree required",
     other_requirements: "Strong academic background"
   };
-  return defaults[field] || "Not specified";
+  return defaults[field] || "Information not available";
 }
 
 // 简单的国家名映射
