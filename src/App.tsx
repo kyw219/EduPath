@@ -462,12 +462,12 @@ function App() {
             // Send completion message
             setMessages(prev => [...prev, {
               role: 'assistant',
-              content: `Analysis complete! You can now view your analysis results in the Target Schools and Reach Schools tabs.`
+              content: `Analysis complete! You can now view your analysis results in the Safe Programs, Possible Programs and Dream Programs tabs.`
             }]);
 
             // Auto-navigate to results page but keep chat open
             setTimeout(() => {
-              setActiveTab('target');
+              setActiveTab('safe');
             }, 2000);
 
           } catch (error) {
@@ -531,7 +531,7 @@ function App() {
                   <span className="text-white text-2xl">🏆</span>
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">No Analysis Yet</h2>
-                <p className="text-slate-400 mb-6">Complete your AI analysis to see dream school recommendations</p>
+                <p className="text-slate-400 mb-6">Complete your AI analysis to see dream program recommendations</p>
                 <button 
                   onClick={() => setShowChat(true)}
                   className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
@@ -552,7 +552,7 @@ function App() {
                   <span className="text-white text-2xl">🛡️</span>
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">No Analysis Yet</h2>
-                <p className="text-slate-400 mb-6">Complete your AI analysis to see safe choice recommendations</p>
+                <p className="text-slate-400 mb-6">Complete your AI analysis to see safe program recommendations</p>
                 <button 
                   onClick={() => setShowChat(true)}
                   className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"

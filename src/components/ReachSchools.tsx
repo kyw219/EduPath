@@ -15,7 +15,7 @@ const DreamSchools: React.FC<DreamSchoolsProps> = ({ schools, onTogglePlan, scho
       <div className="flex items-center">
         <h2 className="text-2xl font-bold text-white flex items-center">
           <span className="w-3 h-3 bg-orange-500 rounded-full mr-3"></span>
-          Dream Schools
+          Dream Programs
         </h2>
       </div>
 

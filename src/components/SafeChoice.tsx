@@ -15,7 +15,7 @@ const SafeChoice: React.FC<SafeChoiceProps> = ({ schools, onTogglePlan, schoolsI
       <div className="flex items-center">
         <h2 className="text-2xl font-bold text-white flex items-center">
           <span className="w-3 h-3 bg-blue-500 rounded-full mr-3"></span>
-          Safe Choice Schools
+          Safe Programs
         </h2>
       </div>
 

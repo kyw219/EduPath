@@ -17,9 +17,9 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
   const menuItems = [
     { id: 'home', icon: Home, label: 'Home' },
-    { id: 'target', icon: Target, label: 'Target Schools' },
-    { id: 'reach', icon: Target, label: 'Dream Schools' },
-    { id: 'safe', icon: Target, label: 'Safe Choice' },
+    { id: 'safe', icon: Target, label: 'Safe Programs' },
+    { id: 'target', icon: Target, label: 'Possible Programs' },
+    { id: 'reach', icon: Target, label: 'Dream Programs' },
     { id: 'timeline', icon: Calendar, label: 'Timeline' }
   ];
 
