@@ -23,68 +23,67 @@ function App() {
   // 用户档案状态 - 从聊天中提取
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // 从聊天响应中提取用户档案信息
-  const extractUserProfileFromChatResponse = (extractedProfile: any): UserProfile => {
-    // 提取GPA
+  // 从聊天消息中按序号提取用户回答
+  const extractUserProfileFromMessages = (): UserProfile => {
     let gpa = 0;
-    if (extractedProfile.gpa_score) {
-      const gpaMatch = extractedProfile.gpa_score.match(/(\d+\.?\d*)/);
-      if (gpaMatch) {
-        gpa = parseFloat(gpaMatch[1]);
-      }
-    }
-
-    // 提取语言成绩
     let toefl: number | undefined;
     let ielts: number | undefined;
-    if (extractedProfile.language_test) {
-      const toeflMatch = extractedProfile.language_test.match(/toefl[^0-9]*(\d+)/i);
-      const ieltsMatch = extractedProfile.language_test.match(/ielts[^0-9]*(\d+\.?\d*)/i);
-      
-      if (toeflMatch) {
-        toefl = parseInt(toeflMatch[1]);
-      }
-      if (ieltsMatch) {
-        ielts = parseFloat(ieltsMatch[1]);
-      }
-    }
-
-    // 提取背景信息
     const background: string[] = [];
-    if (extractedProfile.current_major) {
-      background.push(extractedProfile.current_major);
-    }
-    if (extractedProfile.additional_info) {
-      // 从附加信息中提取技能关键词
-      const skillKeywords = ['python', 'java', 'c++', 'javascript', 'programming', 'data structures', 'algorithms', 'machine learning', 'statistics', 'mathematics'];
-      const additionalInfo = extractedProfile.additional_info.toLowerCase();
-      skillKeywords.forEach(skill => {
-        if (additionalInfo.includes(skill)) {
-          background.push(skill.charAt(0).toUpperCase() + skill.slice(1));
-        }
-      });
-    }
-
-    // 提取经验信息
     const experience: string[] = [];
-    if (extractedProfile.additional_info) {
-      const additionalInfo = extractedProfile.additional_info.toLowerCase();
-      if (additionalInfo.includes('internship') || additionalInfo.includes('intern')) {
-        experience.push('Internship');
+
+    // 遍历用户消息，查找编号回答
+    messages.forEach(message => {
+      if (message.role === 'user') {
+        const content = message.content.toLowerCase();
+        
+        // 1. GPA (寻找 "1." 后的数字)
+        const gpaMatch = content.match(/1\.?\s*([0-9.]+)/);
+        if (gpaMatch) {
+          gpa = parseFloat(gpaMatch[1]);
+        }
+        
+        // 2. 编程语言 (寻找 "2." 后的内容)
+        const progMatch = content.match(/2\.?\s*(.+?)(?=\n|3\.|$)/);
+        if (progMatch) {
+          const progText = progMatch[1];
+          if (progText.includes('python')) background.push('Python');
+          if (progText.includes('java')) background.push('Java');
+          if (progText.includes('c++')) background.push('C++');
+          if (progText.includes('javascript')) background.push('JavaScript');
+        }
+        
+        // 3. 语言成绩 (寻找 "3." 后的数字)
+        const langMatch = content.match(/3\.?\s*(\d+(?:\.\d+)?)/);
+        if (langMatch) {
+          const score = parseFloat(langMatch[1]);
+          if (score > 9) {
+            toefl = score; // 大于9认为是TOEFL
+          } else {
+            ielts = score; // 小于等于9认为是IELTS
+          }
+        }
+        
+        // 4. 项目经验 (寻找 "4." 后的内容)
+        const expMatch = content.match(/4\.?\s*(.+?)(?=\n|5\.|$)/);
+        if (expMatch) {
+          const expText = expMatch[1].toLowerCase();
+          if (expText.includes('internship')) experience.push('Internship');
+          if (expText.includes('research')) experience.push('Research');
+          if (expText.includes('project')) experience.push('Course Projects');
+          if (expText.includes('work')) experience.push('Work Experience');
+        }
+        
+        // 5. 数学课程 (寻找 "5." 后的内容)
+        const mathMatch = content.match(/5\.?\s*(.+?)(?=\n|6\.|$)/);
+        if (mathMatch) {
+          const mathText = mathMatch[1].toLowerCase();
+          if (mathText.includes('linear algebra')) background.push('Linear Algebra');
+          if (mathText.includes('discrete math')) background.push('Discrete Mathematics');
+          if (mathText.includes('calculus')) background.push('Calculus');
+          if (mathText.includes('statistics')) background.push('Statistics');
+        }
       }
-      if (additionalInfo.includes('research')) {
-        experience.push('Research');
-      }
-      if (additionalInfo.includes('work') || additionalInfo.includes('job')) {
-        experience.push('Work Experience');
-      }
-      if (additionalInfo.includes('project')) {
-        experience.push('Course Projects');
-      }
-      if (experience.length === 0) {
-        experience.push('Academic Background');
-      }
-    }
+    });
 
     return {
       name: 'User',
@@ -92,8 +91,8 @@ function App() {
       toefl: toefl,
       ielts: ielts,
       background: background.length > 0 ? background : ['General Background'],
-      degree: extractedProfile.current_major || 'Bachelor\'s Degree',
-      experience: experience
+      degree: 'Bachelor\'s Degree',
+      experience: experience.length > 0 ? experience : ['Academic Background']
     };
   };
 
@@ -407,9 +406,9 @@ function App() {
             // Get school recommendations
             const schools = await getSchools(analysisResponse.analysis_id);
             
-            // 从用户档案中提取信息用于资格评估
+            // 从聊天消息中提取用户信息用于资格评估
             try {
-              const extractedProfile = extractUserProfileFromChatResponse(chatResponse.extractedProfile);
+              const extractedProfile = extractUserProfileFromMessages();
               setUserProfile(extractedProfile);
               console.log('✅ 用户资料提取成功:', extractedProfile);
             } catch (error) {
