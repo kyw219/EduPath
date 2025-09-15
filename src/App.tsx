@@ -16,8 +16,131 @@ function App() {
   const [schoolsData, setSchoolsData] = useState<SchoolsResponse | null>(null);
   const [timelineData, setTimelineData] = useState<TimelineResponse | null>(null);
   const [showChat, setShowChat] = useState(true);
+  const [schoolsInPlan, setSchoolsInPlan] = useState<Set<string>>(new Set());
 
-  // 首次加载时自动获取欢迎消息
+  // Handle adding school to plan
+  const handleAddToPlan = (school: any) => {
+    const schoolId = `${school.school}-${school.program}`;
+    
+    if (schoolsInPlan.has(schoolId)) {
+      return; // Already in plan
+    }
+
+    // Add school to plan
+    setSchoolsInPlan(prev => new Set([...prev, schoolId]));
+
+    // Generate timeline tasks for this school
+    const newTasks = generateSchoolTasks(school);
+    
+    // Update timeline data
+    if (timelineData) {
+      const updatedTimeline = { ...timelineData };
+      
+      // Add tasks to appropriate phases
+      newTasks.forEach(task => {
+        const phaseIndex = updatedTimeline.timeline.findIndex(phase => 
+          phase.phase.toLowerCase().includes(task.phase.toLowerCase())
+        );
+        
+        if (phaseIndex !== -1) {
+          updatedTimeline.timeline[phaseIndex].tasks.push({
+            task: task.task,
+            deadline: task.deadline,
+            status: 'pending',
+            priority: task.priority,
+            reason: task.reason,
+            cost: task.cost
+          });
+        }
+      });
+      
+      // Update totals
+      updatedTimeline.total_tasks += newTasks.length;
+      
+      setTimelineData(updatedTimeline);
+    }
+  };
+
+  // Generate tasks for a specific school
+  const generateSchoolTasks = (school: any) => {
+    const schoolName = school.school;
+    const deadline = school.deadline || "January 15, 2025";
+    
+    return [
+      {
+        phase: "preparation",
+        task: `Research ${schoolName} program requirements`,
+        deadline: "October 15, 2024",
+        priority: "high",
+        reason: `Understand specific requirements for ${school.program} at ${schoolName}`,
+        cost: "Free"
+      },
+      {
+        phase: "application",
+        task: `Complete ${schoolName} application`,
+        deadline: deadline,
+        priority: "high",
+        reason: `Submit application before deadline for ${schoolName}`,
+        cost: "$100"
+      },
+      {
+        phase: "application",
+        task: `Submit transcripts to ${schoolName}`,
+        deadline: deadline,
+        priority: "medium",
+        reason: `Official transcripts required for ${schoolName} application`,
+        cost: "$25"
+      },
+      {
+        phase: "follow-up",
+        task: `Follow up on ${schoolName} application status`,
+        deadline: "March 1, 2025",
+        priority: "medium",
+        reason: `Check application status and provide any additional materials`,
+        cost: "Free"
+      }
+    ];
+  };
+
+  // Initialize timeline with basic structure if no data exists
+  const initializeTimelineIfNeeded = () => {
+    if (!timelineData && schoolsInPlan.size > 0) {
+      const basicTimeline = {
+        timeline: [
+          {
+            phase: "Preparation Phase",
+            period: "September - November 2024",
+            color: "#3B82F6",
+            tasks: []
+          },
+          {
+            phase: "Application Phase", 
+            period: "December 2024 - January 2025",
+            color: "#F59E0B",
+            tasks: []
+          },
+          {
+            phase: "Follow-up Phase",
+            period: "February - April 2025",
+            color: "#10B981",
+            tasks: []
+          }
+        ],
+        key_deadlines: [],
+        total_estimated_cost: "$0",
+        total_tasks: 0,
+        completion_rate: 0
+      };
+      setTimelineData(basicTimeline);
+    }
+  };
+
+  // Initialize timeline when schools are added
+  useEffect(() => {
+    initializeTimelineIfNeeded();
+  }, [schoolsInPlan]);
+
+  // Auto-fetch welcome message on first load
   useEffect(() => {
     const initializeChat = async () => {
       if (messages.length === 0) {
@@ -42,43 +165,42 @@ function App() {
     
     if (!analysisId) {
       try {
-        // 使用新的智能聊天API
+        // Use new intelligent chat API
         const chatResponse = await intelligentChat(updatedMessages);
         
-        // 添加AI回复
+        // Add AI reply
         setMessages(prev => [...prev, {
           role: 'assistant',
           content: chatResponse.reply
         }]);
         
-        // 如果有足够信息，开始分析
+        // If enough information is available, start analysis
         if (chatResponse.shouldAnalyze) {
           setIsAnalyzing(true);
           
           try {
-            // 分析用户档案
+            // Analyze user profile
             const analysisResponse = await analyzeChat(chatResponse.extractedProfile);
             setAnalysisId(analysisResponse.analysis_id);
             
-            // 获取学校推荐
+            // Get school recommendations
             const schools = await getSchools(analysisResponse.analysis_id);
             setSchoolsData(schools);
             
-            // 获取时间线
+            // Get timeline
             const timeline = await getTimeline(analysisResponse.analysis_id);
             setTimelineData(timeline);
 
-            // 发送完成消息
+            // Send completion message
             setMessages(prev => [...prev, {
               role: 'assistant',
-              content: `Analysis complete! You can now view your analysis results.`
+              content: `Analysis complete! You can now view your analysis results in the Target Schools and Reach Schools tabs.`
             }]);
 
-            // 自动跳转到结果页面
+            // Auto-navigate to results page but keep chat open
             setTimeout(() => {
               setActiveTab('target');
-              setShowChat(false);
-            }, 3000);
+            }, 2000);
 
           } catch (error) {
             console.error('Analysis failed:', error);
@@ -127,13 +249,24 @@ function App() {
 
     switch (activeTab) {
       case 'target':
-        return <TargetSchools schools={schoolsData.target_schools} />;
+        return <TargetSchools schools={schoolsData.target_schools} onAddToPlan={handleAddToPlan} schoolsInPlan={schoolsInPlan} />;
       case 'reach':
-        return <ReachSchools schools={schoolsData.reach_schools} />;
+        return <ReachSchools schools={schoolsData.reach_schools} onAddToPlan={handleAddToPlan} schoolsInPlan={schoolsInPlan} />;
       case 'timeline':
+        if (!timelineData) {
+          return (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <h3 className="text-white text-xl mb-4">No Timeline Generated Yet</h3>
+                <p className="text-slate-400 mb-4">Add schools to your plan to generate a personalized timeline</p>
+                <p className="text-slate-500 text-sm">Use the "Add to Plan" button on school cards to get started</p>
+              </div>
+            </div>
+          );
+        }
         return <Timeline timelineData={timelineData} />;
       default:
-        return <TargetSchools schools={schoolsData.target_schools} />;
+        return <TargetSchools schools={schoolsData.target_schools} onAddToPlan={handleAddToPlan} schoolsInPlan={schoolsInPlan} />;
     }
   };
 

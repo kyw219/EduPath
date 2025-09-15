@@ -1,9 +1,9 @@
 import { AnalysisResponse, SchoolsResponse, TimelineResponse, ChatMessage } from '../types';
 
-// 本地开发和生产环境都使用相对路径（vercel dev 会处理路由）
+// Use relative paths for both local development and production (vercel dev handles routing)
 const API_BASE = '';
 
-// 新的智能聊天API
+// New intelligent chat API
 export const intelligentChat = async (chatHistory: ChatMessage[]): Promise<{
   reply: string;
   extractedProfile: any;
@@ -61,7 +61,7 @@ export const getTimeline = async (analysisId: string): Promise<TimelineResponse>
   return response.json();
 };
 
-// 学校调整API
+// School adjustment API
 export const adjustSchools = async (
   analysisId: string, 
   action: string, 

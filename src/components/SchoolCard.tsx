@@ -4,6 +4,8 @@ import { School } from '../types';
 interface SchoolCardProps {
   school: School;
   type: 'target' | 'reach';
+  onAddToPlan?: (school: School) => void;
+  schoolsInPlan?: Set<string>;
 }
 
 interface QualificationItem {
@@ -13,7 +15,7 @@ interface QualificationItem {
   requiredValue: string;
 }
 
-const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
+const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onAddToPlan, schoolsInPlan }) => {
 
   // Generate school abbreviation
   const getSchoolAbbreviation = (schoolName: string) => {
@@ -170,12 +172,29 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
             <p className="text-slate-400 text-sm font-medium mb-4">Compatibility Score</p>
             
             {/* Add to Plan Button */}
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors mb-2">
-              Add to Plan
-            </button>
-            <p className="text-slate-500 text-xs text-center">
-              View in Timeline after adding
-            </p>
+            {(() => {
+              const schoolId = `${school.school}-${school.program}`;
+              const isInPlan = schoolsInPlan?.has(schoolId);
+              
+              return (
+                <>
+                  <button 
+                    onClick={() => onAddToPlan?.(school)}
+                    disabled={isInPlan}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors mb-2 ${
+                      isInPlan 
+                        ? 'bg-green-600 text-white cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    {isInPlan ? 'Added to Plan' : 'Add to Plan'}
+                  </button>
+                  <p className="text-slate-500 text-xs text-center">
+                    {isInPlan ? 'Check Timeline for tasks' : 'View in Timeline after adding'}
+                  </p>
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -226,11 +245,11 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
                   <div className="space-y-1">
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 text-xs">Opens:</span>
-                      <span className="text-slate-300 text-sm">{school.application_opens || "Sep 1, 2024"}</span>
+                      <span className="text-slate-300 text-sm">{school.application_opens || "September 1, 2024"}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-slate-400 text-xs">Deadline:</span>
-                      <span className="text-slate-300 text-sm">{school.deadline || "Dec 15, 2024"}</span>
+                      <span className="text-slate-300 text-sm">{school.deadline || "January 15, 2025"}</span>
                     </div>
                   </div>
                 </div>

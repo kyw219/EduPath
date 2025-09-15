@@ -4,9 +4,11 @@ import SchoolCard from './SchoolCard';
 
 interface ReachSchoolsProps {
   schools: School[];
+  onAddToPlan: (school: School) => void;
+  schoolsInPlan: Set<string>;
 }
 
-const ReachSchools: React.FC<ReachSchoolsProps> = ({ schools }) => {
+const ReachSchools: React.FC<ReachSchoolsProps> = ({ schools, onAddToPlan, schoolsInPlan }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center">
@@ -21,7 +23,9 @@ const ReachSchools: React.FC<ReachSchoolsProps> = ({ schools }) => {
           <SchoolCard 
             key={index} 
             school={school} 
-            type="reach" 
+            type="reach"
+            onAddToPlan={onAddToPlan}
+            schoolsInPlan={schoolsInPlan}
           />
         ))}
       </div>
