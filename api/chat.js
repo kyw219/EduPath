@@ -112,11 +112,11 @@ SPECIALIZED QUESTIONS (optional, field-specific):
 
 LOGIC:
 - Set has_sufficient_info = true only if ALL 5 basic pieces are provided
-- Set needs_specialized_questions = true if: basic info is complete AND target field is 'cs' or 'computer science' AND no specialized questions have been asked yet
+- Set needs_specialized_questions = true if: basic info is complete AND target field matches any major field (cs, business, engineering, medicine, sciences, public_health, arts, social_sciences, education, law) AND no specialized questions have been asked yet
 - Set specialized_field to the detected field (cs, business, engineering, medicine, sciences, public_health, arts, social_sciences, education, law)
 - Extract any specialized answers provided in specialized_answers object
 - Set is_responding_to_specialized = true if user is responding after specialized questions were shown (any message that provides specialized info or says they want to skip/proceed)
-- Set ready_to_analyze = true ONLY if user explicitly wants to start analysis (says "analyze", "start", "go", etc.)
+- Set ready_to_analyze = true ONLY if: (user explicitly wants to start analysis AND has answered at least one specialized question) OR user says they want to skip specialized questions
 
 IMPORTANT: 
 - Use empty string "" for missing information
@@ -290,9 +290,14 @@ If you provide additional details later, I can always update your analysis for b
       } else {
         aiReply = `Perfect! I have all the essential information. Starting analysis now... 🔄`;
       }
-    } else if (extractedData.has_sufficient_info && (extractedData.ready_to_analyze || extractedData.is_responding_to_specialized)) {
-      // 用户明确要求分析或已回答专业问题
+    } else if (extractedData.has_sufficient_info && extractedData.ready_to_analyze && extractedData.is_responding_to_specialized) {
+      // 用户明确要求分析且已回答专业问题
       aiReply = `Perfect! Starting analysis... 🔄`;
+    } else if (extractedData.has_sufficient_info && extractedData.is_responding_to_specialized && !extractedData.ready_to_analyze) {
+      // 用户回答了专业问题但没有明确要求分析
+      aiReply = `Great! I have more details about your background. 
+      
+When you're ready for your personalized school recommendations, just say "start analysis" or "analyze"! 🚀`;
     } else {
       // 构建已获得信息的确认
       let confirmation = "";
@@ -354,8 +359,7 @@ If you provide additional details later, I can always update your analysis for b
       extractedProfile: extractedData,
       hasBasicInfo: extractedData.has_sufficient_info,
       shouldAnalyze: extractedData.has_sufficient_info && (
-        extractedData.ready_to_analyze || 
-        extractedData.is_responding_to_specialized ||
+        (extractedData.ready_to_analyze && extractedData.is_responding_to_specialized) || 
         !extractedData.needs_specialized_questions
       )
     });

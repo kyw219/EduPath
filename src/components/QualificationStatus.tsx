@@ -179,39 +179,31 @@ const QualificationStatus: React.FC<QualificationStatusProps> = ({ school, userP
     }
   ];
 
-  // Get qualification status indicator - 颜色系统
+  // Get qualification status indicator - 颜色系统，增大尺寸
   const getQualificationIndicator = (status: QualificationItem['status']) => {
-    const baseClasses = 'w-4 h-4 rounded-full flex items-center justify-center transition-all duration-200';
+    const baseClasses = 'w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200';
     
     switch (status) {
       case 'met':
-        // 🟢 绿色圆点 - 完全符合
+        // 🟢 绿色实心圆点 - 完全符合
         return (
-          <div className={`${baseClasses} bg-green-500 border-2 border-green-400 shadow-sm`}>
-            <div className="w-2 h-2 bg-white rounded-full"></div>
-          </div>
+          <div className={`${baseClasses} bg-green-500 shadow-sm`}></div>
         );
       case 'partial':
-        // 🟡 黄色圆点 - 部分符合
+        // 🟡 黄色实心圆点 - 部分符合
         return (
-          <div className={`${baseClasses} bg-yellow-500 border-2 border-yellow-400 shadow-sm`}>
-            <div className="w-2 h-2 bg-white rounded-full"></div>
-          </div>
+          <div className={`${baseClasses} bg-yellow-500 shadow-sm`}></div>
         );
       case 'not_met':
-        // 🔴 红色圆点 - 不符合
+        // 🔴 红色实心圆点 - 不符合
         return (
-          <div className={`${baseClasses} bg-red-500 border-2 border-red-400 shadow-sm`}>
-            <div className="w-2 h-2 bg-white rounded-full"></div>
-          </div>
+          <div className={`${baseClasses} bg-red-500 shadow-sm`}></div>
         );
       case 'unknown':
       default:
-        // ⚪ 灰色圆点 - 无法判断
+        // ⚪ 灰色实心圆点 - 无法判断
         return (
-          <div className={`${baseClasses} bg-gray-500 border-2 border-gray-400 shadow-sm`}>
-            <div className="w-2 h-2 bg-white rounded-full"></div>
-          </div>
+          <div className={`${baseClasses} bg-gray-500 shadow-sm`}></div>
         );
     }
   };
@@ -225,28 +217,11 @@ const QualificationStatus: React.FC<QualificationStatusProps> = ({ school, userP
       <div className="space-y-3">
         {qualificationData.map((item, index) => (
           <div key={index}>
-            <label className="text-slate-400 text-xs font-medium">{item.name}</label>
-            <div className="mt-1 p-3 bg-slate-700 rounded border border-slate-600">
-              {/* 要求信息 */}
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-slate-300 text-xs font-medium">要求:</span>
-                <div className="ml-2 flex-shrink-0">
-                  {getQualificationIndicator(item.status)}
-                </div>
-              </div>
-              <div className="text-slate-300 text-xs mb-2">
-                {item.requiredValue || '未指定'}
-              </div>
-              
-              {/* 用户信息 */}
-              {userProfile && (
-                <div className="border-t border-slate-600 pt-2">
-                  <span className="text-slate-400 text-xs">你的情况:</span>
-                  <div className="text-slate-200 text-xs mt-1">
-                    {item.userValue}
-                  </div>
-                </div>
-              )}
+            {/* 只显示标签，与左边对应 */}
+            <label className="text-slate-400 text-xs font-medium invisible">{item.name}</label>
+            {/* 圆点容器，高度与左边的要求框对齐 */}
+            <div className="mt-1 p-2 flex items-center justify-center border border-transparent rounded">
+              {getQualificationIndicator(item.status)}
             </div>
           </div>
         ))}
