@@ -59,7 +59,7 @@ export default async function handler(req, res) {
         },
         needs_specialized_questions: {
           type: "boolean",
-          description: "Whether specialized questions for the target field should be asked"
+          description: "Whether specialized questions for the target field should be asked (only true if basic info is complete and no specialized info has been provided yet)"
         },
         specialized_field: {
           type: "string",
@@ -76,12 +76,16 @@ export default async function handler(req, res) {
             skills: { type: "string", description: "Technical skills or tools" }
           }
         },
+        is_responding_to_specialized: {
+          type: "boolean", 
+          description: "Whether user is responding to specialized questions (any response after specialized questions were asked)"
+        },
         ready_to_analyze: {
           type: "boolean",
           description: "Whether user wants to proceed with analysis (said 'analyze', 'start', 'go', etc.)"
         }
       },
-      required: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test", "has_sufficient_info", "missing_info", "needs_specialized_questions", "ready_to_analyze"]
+      required: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test", "has_sufficient_info", "missing_info", "needs_specialized_questions", "is_responding_to_specialized", "ready_to_analyze"]
     };
 
     // 构建提示词
@@ -108,9 +112,10 @@ SPECIALIZED QUESTIONS (optional, field-specific):
 
 LOGIC:
 - Set has_sufficient_info = true only if ALL 5 basic pieces are provided
-- Set needs_specialized_questions = true if basic info is complete and target field matches major fields
+- Set needs_specialized_questions = true ONLY if: basic info is complete AND target field matches major fields AND no specialized info has been provided yet
 - Set specialized_field to the detected field (cs, business, engineering, medicine, sciences, public_health, arts, social_sciences, education, law)
 - Extract any specialized answers provided in specialized_answers object
+- Set is_responding_to_specialized = true if user is responding after specialized questions were shown (any message that provides specialized info or says they want to skip/proceed)
 - Set ready_to_analyze = true if user explicitly wants to start analysis (says "analyze", "start", "go", etc.)
 
 IMPORTANT: 
@@ -144,101 +149,101 @@ Please extract information and return in JSON format.`;
         cs: {
           title: "CS Specialization Questions",
           questions: [
-            "What's your GRE General score? (e.g., 329, 318, or planning to take)",
-            "Which programming languages are you proficient in? (Python, Java, C++, JavaScript, etc.)",
-            "What CS area interests you most? (AI/ML, Software Engineering, Data Science, Cybersecurity, HCI)",
+            "What's your GRE General score?",
+            "Which programming languages are you proficient in?",
+            "What CS area interests you most?",
             "Do you have any programming projects, internships, or research experience?",
-            "Have you taken advanced math courses? (Linear Algebra, Statistics, Discrete Math)"
+            "Have you taken advanced math courses?"
           ]
         },
         business: {
           title: "Business Specialization Questions", 
           questions: [
-            "What's your GMAT or GRE score? (e.g., GMAT 720, GRE 325, or planning to take)",
-            "How many years of work experience do you have? (0-2, 3-5, 5+ years)",
-            "What's your career goal? (Consulting, Finance, Tech, Entrepreneurship, Management)",
+            "What's your GMAT or GRE score?",
+            "How many years of work experience do you have?",
+            "What's your career goal?",
             "Do you have leadership, management, or team project experience?",
-            "Have you taken business courses? (Finance, Marketing, Operations, Strategy)"
+            "Have you taken business courses?"
           ]
         },
         engineering: {
           title: "Engineering Specialization Questions",
           questions: [
-            "What's your GRE General score? (e.g., 328, 324, or planning to take)", 
-            "Which engineering field interests you? (Mechanical, Chemical, Civil, Biomedical, Electrical)",
+            "What's your GRE General score?", 
+            "Which engineering field interests you?",
             "Have you completed Calculus I-III, Linear Algebra, and Physics courses?",
             "Do you have laboratory or hands-on engineering project experience?",
-            "Are you familiar with engineering software? (CAD, MATLAB, Python, Simulink)"
+            "Are you familiar with engineering software?"
           ]
         },
         medicine: {
           title: "Medicine Specialization Questions",
           questions: [
-            "What's your MCAT score? (e.g., 515, 520, or planning to take)",
-            "Do you have clinical experience? (Hospital volunteering, shadowing, internships)", 
+            "What's your MCAT score?",
+            "Do you have clinical experience?", 
             "Do you have medical research experience or publications?",
-            "Have you completed pre-med requirements? (Biology, Chemistry, Physics, Organic Chemistry)",
-            "Which medical field interests you? (Internal Medicine, Surgery, Pediatrics, Psychiatry, Research)"
+            "Have you completed pre-med requirements?",
+            "Which medical field interests you?"
           ]
         },
         sciences: {
           title: "Sciences Specialization Questions",
           questions: [
-            "What's your GRE General score? (e.g., 314, 318, or planning to take)",
-            "Which science field interests you? (Chemistry, Biology, Physics, Mathematics)",
+            "What's your GRE General score?",
+            "Which science field interests you?",
             "Do you have research experience or publications?", 
             "Do you have laboratory skills or wet lab experience?",
-            "Have you completed advanced math courses? (Calculus, Statistics, Linear Algebra)"
+            "Have you completed advanced math courses?"
           ]
         },
         public_health: {
           title: "Public Health Specialization Questions",
           questions: [
-            "What's your GRE General score? (e.g., 310, 315, or planning to take)",
+            "What's your GRE General score?",
             "Have you taken statistics or research methods courses?",
             "Do you have healthcare, NGO, or community service experience?",
-            "Which public health area interests you? (Epidemiology, Health Policy, Global Health, Biostatistics)", 
-            "What's your undergraduate background? (Biology, Psychology, Social Sciences, Pre-med)"
+            "Which public health area interests you?", 
+            "What's your undergraduate background?"
           ]
         },
         arts: {
           title: "Arts & Humanities Specialization Questions",
           questions: [
-            "What's your GRE General score? (e.g., 310, 315, or planning to take)",
+            "What's your GRE General score?",
             "Do you have a portfolio, writing samples, or creative works?",
             "Do you speak multiple languages or have cultural studies background?",
-            "Which area interests you? (Literature, History, Philosophy, Art History, Cultural Studies)",
+            "Which area interests you?",
             "Do you have research, thesis, or academic writing experience?"
           ]
         },
         social_sciences: {
           title: "Social Sciences Specialization Questions", 
           questions: [
-            "What's your GRE General score? (e.g., 315, 320, or planning to take)",
+            "What's your GRE General score?",
             "Have you taken statistics, research methods, or data analysis courses?",
             "Do you have fieldwork, survey, or community research experience?",
-            "Which area interests you? (Psychology, Sociology, Political Science, Anthropology, Economics)",
-            "Are you comfortable with quantitative analysis? (SPSS, R, Python for data analysis)"
+            "Which area interests you?",
+            "Are you comfortable with quantitative analysis?"
           ]
         },
         education: {
           title: "Education Specialization Questions",
           questions: [
-            "What's your GRE General score? (e.g., 300, 310, or planning to take)",
+            "What's your GRE General score?",
             "Do you have teaching, tutoring, or training experience?",
-            "Which education area interests you? (Curriculum Design, Educational Psychology, Administration, Special Education)",
-            "Which age group do you prefer? (Early Childhood, K-12, Higher Education, Adult Learning)",
-            "Have you taken education courses? (Child Development, Learning Theory, Classroom Management)"
+            "Which education area interests you?",
+            "Which age group do you prefer?",
+            "Have you taken education courses?"
           ]
         },
         law: {
           title: "Law Specialization Questions",
           questions: [
-            "What's your LSAT score? (e.g., 165, 170, or planning to take)",
-            "Do you have legal experience? (Internships, paralegal work, legal research)",
-            "Which law area interests you? (Corporate Law, Criminal Law, International Law, Human Rights)",
+            "What's your LSAT score?",
+            "Do you have legal experience?",
+            "Which law area interests you?",
             "Do you have strong writing or debate experience?",
-            "What's your undergraduate major? (Any field is acceptable for law school)"
+            "What's your undergraduate major?"
           ]
         }
       };
@@ -290,9 +295,8 @@ If you provide additional details later, I can always update your analysis for b
       const hasSpecializedInfo = extractedData.specialized_answers && 
         Object.values(extractedData.specialized_answers).some(val => val && val.trim() !== '');
       
-      if (hasSpecializedInfo) {
-        aiReply = `Excellent! I can analyze with what we have!
-If you provide additional details later, I can always update your analysis for better matches! 🚀`;
+      if (extractedData.is_responding_to_specialized || hasSpecializedInfo) {
+        aiReply = `Perfect! Starting analysis... 🔄`;
       } else {
         aiReply = `Perfect! Starting analysis... 🔄`;
       }
@@ -356,7 +360,11 @@ If you provide additional details later, I can always update your analysis for b
       reply: aiReply,
       extractedProfile: extractedData,
       hasBasicInfo: extractedData.has_sufficient_info,
-      shouldAnalyze: extractedData.has_sufficient_info && (extractedData.ready_to_analyze || !extractedData.needs_specialized_questions)
+      shouldAnalyze: extractedData.has_sufficient_info && (
+        extractedData.ready_to_analyze || 
+        !extractedData.needs_specialized_questions || 
+        extractedData.is_responding_to_specialized
+      )
     });
 
   } catch (error) {
