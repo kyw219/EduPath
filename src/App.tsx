@@ -3,7 +3,7 @@ import { MessageCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
 import Home from './components/Home';
-import PerfectMatch from './components/TargetSchools';
+import TargetSchools from './components/TargetSchools';
 import DreamSchools from './components/ReachSchools';
 import SafeChoice from './components/SafeChoice';
 import Timeline from './components/Timeline';
@@ -406,7 +406,7 @@ function App() {
             </div>
           );
         }
-        return <PerfectMatch schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
+        return <TargetSchools schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
       case 'reach':
         if (!schoolsData) {
           return (
@@ -468,7 +468,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex overflow-hidden">
       <Sidebar 
         activeTab={activeTab} 
         onTabChange={setActiveTab}
@@ -479,7 +479,7 @@ function App() {
       <div className="flex-1 flex">
         {/* Top Bar with Chat Toggle */}
         <div className="flex-1 flex flex-col">
-          <div className="flex justify-end p-4">
+          <div className="flex justify-end p-4 flex-shrink-0">
             <button
               onClick={() => setShowChat(!showChat)}
               className={`p-3 rounded-full transition-colors ${

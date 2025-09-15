@@ -18,7 +18,7 @@ const DreamSchools: React.FC<DreamSchoolsProps> = ({ schools, onTogglePlan, scho
         </h2>
       </div>
 
-      <div className="min-h-[600px] space-y-6 pr-2">
+      <div className="space-y-6 pr-2">
         {schools.map((school, index) => (
           <SchoolCard 
             key={index} 

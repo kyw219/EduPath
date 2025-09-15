@@ -251,47 +251,84 @@ export default async function handler(req, res) {
       const [candidateRows] = await connection.execute(candidatesSql, candidatesParams);
       console.log(`🔍 找到 ${candidateRows.length} 个候选学校`);
 
-      // 智能三分类算法
+      // 智能三分类算法 - 确保每所学校只出现一次，逻辑合理分配
       function classifySchools(candidates) {
         const dreamSchools = [];
-        const perfectMatch = [];
+        const targetSchools = [];
         const safeChoice = [];
+        const usedSchools = new Set(); // 记录已使用的学校
         
         // 按相似度排序（最相似的在前面）
         const sortedCandidates = [...candidates].sort((a, b) => a.similarity - b.similarity);
         
+        // 第一轮：选择Dream Schools (Top 30排名的学校，不考虑相似度)
         sortedCandidates.forEach(school => {
+          const schoolName = school.school_name;
           const ranking = school.qs_ranking;
           
-          // Dream Schools: 排名1-30的顶级学校
+          if (usedSchools.has(schoolName)) return;
+          
           if (ranking <= 30 && dreamSchools.length < 4) {
             dreamSchools.push(school);
-          }
-          // Perfect Match: 排名31-80的优质学校，优先选择相似度最高的
-          else if (ranking > 30 && ranking <= 80 && perfectMatch.length < 6) {
-            perfectMatch.push(school);
-          }
-          // Safe Choice: 排名81-100的学校，或者前面没选够的话从其他学校补充
-          else if (ranking > 80 && ranking <= 100 && safeChoice.length < 3) {
-            safeChoice.push(school);
-          }
-          // 如果某个类别还没满，从剩余学校中补充
-          else if (perfectMatch.length < 6) {
-            perfectMatch.push(school);
-          }
-          else if (safeChoice.length < 3) {
-            safeChoice.push(school);
+            usedSchools.add(schoolName);
           }
         });
         
-        return { dreamSchools, perfectMatch, safeChoice };
+        // 第二轮：选择Target Schools (相似度最高的学校，排名31-80优先)
+        sortedCandidates.forEach(school => {
+          const schoolName = school.school_name;
+          const ranking = school.qs_ranking;
+          
+          if (usedSchools.has(schoolName)) return;
+          
+          // 优先选择排名31-80的高相似度学校
+          if (ranking > 30 && ranking <= 80 && targetSchools.length < 6) {
+            targetSchools.push(school);
+            usedSchools.add(schoolName);
+          }
+        });
+        
+        // 第三轮：继续填充Target Schools (如果还没满，选择其他高相似度学校)
+        if (targetSchools.length < 6) {
+          sortedCandidates.forEach(school => {
+            const schoolName = school.school_name;
+            
+            if (usedSchools.has(schoolName)) return;
+            if (targetSchools.length >= 6) return;
+            
+            targetSchools.push(school);
+            usedSchools.add(schoolName);
+          });
+        }
+        
+        // 第四轮：选择Safe Choice (剩余的高相似度学校，排名较低但匹配度高)
+        sortedCandidates.forEach(school => {
+          const schoolName = school.school_name;
+          const ranking = school.qs_ranking;
+          
+          if (usedSchools.has(schoolName)) return;
+          if (safeChoice.length >= 3) return;
+          
+          // 优先选择排名较低但相似度高的学校作为保底
+          if (ranking > 50) {
+            safeChoice.push(school);
+            usedSchools.add(schoolName);
+          }
+        });
+        
+        return { dreamSchools, targetSchools, safeChoice };
       }
       
-      const { dreamSchools, perfectMatch, safeChoice } = classifySchools(candidateRows);
-      console.log(`📊 分类结果: Dream(${dreamSchools.length}) Perfect(${perfectMatch.length}) Safe(${safeChoice.length})`);
+      const { dreamSchools, targetSchools, safeChoice } = classifySchools(candidateRows);
+      console.log(`📊 分类结果: Dream(${dreamSchools.length}) Target(${targetSchools.length}) Safe(${safeChoice.length})`);
       
-      // 处理target schools (Perfect Match)
-      const targetSchools = await Promise.all(perfectMatch.map(async row => {
+      // 记录每个类别的学校名称，用于调试
+      console.log('🏆 Dream Schools:', dreamSchools.map(s => s.school_name));
+      console.log('🎯 Target Schools:', targetSchools.map(s => s.school_name));
+      console.log('🛡️ Safe Choice:', safeChoice.map(s => s.school_name));
+      
+      // 处理target schools (Target Schools)
+      const processedTargetSchools = await Promise.all(targetSchools.map(async row => {
         const structuredData = await structureSchoolData(row);
         return {
           school: row.school_name,
@@ -351,7 +388,7 @@ export default async function handler(req, res) {
 
       // 更新数据库存储匹配结果
       // 临时解决方案：将safe_schools合并到target_schools中，直到数据库schema更新
-      const combinedTargetSchools = [...targetSchools, ...safeSchools];
+      const combinedTargetSchools = [...processedTargetSchools, ...safeSchools];
       
       await connection.execute(`
         UPDATE user_sessions 
@@ -363,11 +400,11 @@ export default async function handler(req, res) {
         analysisId
       ]);
 
-      console.log(`✅ 找到 ${targetSchools.length} 个完美匹配，${reachSchools.length} 个冲刺学校，${safeSchools.length} 个保底选择`);
+      console.log(`✅ 找到 ${processedTargetSchools.length} 个目标学校，${reachSchools.length} 个冲刺学校，${safeSchools.length} 个保底选择`);
 
       // 返回响应
       res.status(200).json({
-        target_schools: targetSchools,
+        target_schools: processedTargetSchools,
         reach_schools: reachSchools,
         safe_schools: safeSchools
       });
