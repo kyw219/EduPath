@@ -113,10 +113,20 @@ SPECIALIZED QUESTIONS (optional, field-specific):
 LOGIC:
 - Set has_sufficient_info = true only if ALL 5 basic pieces are provided
 - Set needs_specialized_questions = true if: basic info is complete AND target field matches any major field (cs, business, engineering, medicine, sciences, public_health, arts, social_sciences, education, law) AND no specialized questions have been asked yet
-- Set specialized_field to the detected field (cs, business, engineering, medicine, sciences, public_health, arts, social_sciences, education, law)
+- Set specialized_field to the detected field, mapping user input to standard fields:
+  * "computer science", "cs", "software engineering", "data science" → "cs"
+  * "business", "mba", "business administration", "management" → "business"  
+  * "engineering", "mechanical engineering", "electrical engineering", etc. → "engineering"
+  * "medicine", "medical", "pre-med", "healthcare" → "medicine"
+  * "biology", "chemistry", "physics", "mathematics" → "sciences"
+  * "public health", "epidemiology", "health policy" → "public_health"
+  * "literature", "history", "philosophy", "art" → "arts"
+  * "psychology", "sociology", "political science" → "social_sciences"
+  * "education", "teaching", "pedagogy" → "education"
+  * "law", "legal studies", "jurisprudence" → "law"
 - Extract any specialized answers provided in specialized_answers object
 - Set is_responding_to_specialized = true if user is responding after specialized questions were shown (any message that provides specialized info or says they want to skip/proceed)
-- Set ready_to_analyze = true ONLY if: user explicitly wants to start analysis (says "analyze", "start analysis", "go", "proceed", etc.) OR user explicitly says they want to skip specialized questions
+- Set ready_to_analyze = true ONLY if: (user explicitly wants to start analysis AND has answered at least one specialized question) OR user says they want to skip specialized questions
 
 IMPORTANT: 
 - Use empty string "" for missing information
@@ -380,7 +390,10 @@ Just say "start analysis" or "analyze" when you're ready! 🎯`;
       reply: aiReply,
       extractedProfile: extractedData,
       hasBasicInfo: extractedData.has_sufficient_info,
-      shouldAnalyze: extractedData.has_sufficient_info && extractedData.ready_to_analyze
+      shouldAnalyze: extractedData.has_sufficient_info && (
+        (extractedData.ready_to_analyze && extractedData.is_responding_to_specialized) || 
+        !extractedData.needs_specialized_questions
+      )
     });
 
   } catch (error) {
