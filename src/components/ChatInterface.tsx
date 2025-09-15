@@ -82,7 +82,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
                 )}
               </div>
               <div
-                className={`px-3 py-2 rounded-lg text-sm ${
+                className={`px-3 py-2 rounded-lg text-sm whitespace-pre-wrap ${
                   message.role === 'user'
                     ? 'bg-blue-600 text-white'
                     : 'bg-slate-700 text-slate-200'

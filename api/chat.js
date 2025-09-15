@@ -51,8 +51,11 @@ export default async function handler(req, res) {
         },
         missing_info: {
           type: "array",
-          items: { type: "string" },
-          description: "List of missing information categories"
+          items: { 
+            type: "string",
+            enum: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test"]
+          },
+          description: "Array of missing field names from: current_major, target_field, gpa_score, preferred_countries, language_test"
         }
       },
       required: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test", "has_sufficient_info", "missing_info"]
@@ -62,14 +65,14 @@ export default async function handler(req, res) {
     const systemPrompt = `You are EduPath AI assistant. Extract information from user conversation and determine if there's enough information to start analysis.
 
 Required information for analysis:
-1. Current major/background
-2. Target graduate program field
-3. GPA or average grade
-4. Preferred countries/regions
-5. Language test status (TOEFL/IELTS score or plan)
+1. Current major/background (field: current_major)
+2. Target graduate program field (field: target_field)
+3. GPA or average grade (field: gpa_score)
+4. Preferred countries/regions (field: preferred_countries)
+5. Language test status (field: language_test)
 
 Set has_sufficient_info to true only if ALL 5 pieces of information are provided.
-List any missing categories in missing_info array.
+For missing_info array, use these exact field names: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test"]
 
 Please extract information and return in JSON format.`;
 
@@ -90,6 +93,7 @@ Please extract information and return in JSON format.`;
     });
 
     const extractedData = JSON.parse(completion.choices[0].message.content);
+    console.log('🔍 GPT提取的数据:', JSON.stringify(extractedData, null, 2));
 
     // 生成AI回复
     let aiReply;
