@@ -16,7 +16,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid messages' });
     }
 
-    // 简化的信息提取JSON Schema
+    // 定义信息提取的JSON Schema
     const extractionSchema = {
       type: "object",
       properties: {
@@ -39,51 +39,100 @@ export default async function handler(req, res) {
         },
         language_test: {
           type: "string",
-          description: "TOEFL/IELTS score or status (e.g., 'TOEFL 100', 'IELTS 7.5', or empty string if not mentioned)"
+          description: "TOEFL/IELTS score or status (e.g., 'TOEFL 100', 'IELTS 7.5', 'planning to take', or empty string if not mentioned)"
         },
         additional_info: {
           type: "string",
-          description: "Any other relevant information (GRE/GMAT/LSAT scores, work experience, projects, etc.)"
+          description: "Any other information provided by user"
         },
-        has_enough_info: {
+        has_sufficient_info: {
           type: "boolean",
-          description: "Whether there is enough information to provide school recommendations (at least major, target field, and GPA)"
-        },
-        should_reanalyze: {
-          type: "boolean",
-          description: "Whether new information was provided that would change previous recommendations"
+          description: "Whether all 5 core pieces of information are provided (major, target field, GPA, countries, language)"
         },
         missing_info: {
           type: "array",
-          items: { type: "string" },
-          description: "List of important missing information that would improve recommendations"
+          items: { 
+            type: "string",
+            enum: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test"]
+          },
+          description: "Array of missing field names from: current_major, target_field, gpa_score, preferred_countries, language_test"
+        },
+        needs_specialized_questions: {
+          type: "boolean",
+          description: "Whether specialized questions for the target field should be asked (only true if basic info is complete and no specialized info has been provided yet)"
+        },
+        specialized_field: {
+          type: "string",
+          description: "The specific field for specialized questions (cs, business, engineering, medicine, etc.)"
+        },
+        specialized_answers: {
+          type: "object",
+          description: "Answers to field-specific questions",
+          properties: {
+            test_score: { type: "string", description: "GRE/GMAT/MCAT/LSAT score" },
+            specialization: { type: "string", description: "Specific area of interest within the field" },
+            experience: { type: "string", description: "Relevant experience or projects" },
+            coursework: { type: "string", description: "Relevant courses or academic preparation" },
+            skills: { type: "string", description: "Technical skills or tools" }
+          }
+        },
+        is_responding_to_specialized: {
+          type: "boolean", 
+          description: "Whether user is responding to specialized questions (any response after specialized questions were asked)"
+        },
+        ready_to_analyze: {
+          type: "boolean",
+          description: "Whether user wants to proceed with analysis (said 'analyze', 'start', 'go', etc.)"
         }
       },
-      required: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test", "additional_info", "has_enough_info", "should_reanalyze", "missing_info"]
+      required: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test", "has_sufficient_info", "missing_info", "needs_specialized_questions", "is_responding_to_specialized", "ready_to_analyze"]
     };
 
-    // 简化的提示词
-    const systemPrompt = `You are EduPath AI assistant. Extract and update user information from conversation.
+    // 构建提示词
+    const systemPrompt = `You are EduPath AI assistant. Extract information from user conversation and determine analysis readiness.
 
-EXTRACT INFORMATION:
-1. Current major/background → current_major
-2. Target graduate program → target_field  
-3. GPA/grades → gpa_score
-4. Countries of interest → preferred_countries
-5. Language test scores → language_test
-6. Additional info (GRE/GMAT/LSAT, experience, projects) → additional_info
+BASIC REQUIRED INFORMATION (must have all 5):
+1. Current major/background (field: current_major)
+2. Target graduate program field (field: target_field)  
+3. GPA or average grade (field: gpa_score)
+4. Preferred countries/regions (field: preferred_countries)
+5. Language test status (field: language_test)
 
-DECISION LOGIC:
-- Set has_enough_info = true if you have at least: major, target field, and GPA
-- Set should_reanalyze = true if user provided NEW information that wasn't mentioned before
-- List missing_info that would significantly improve recommendations
+SPECIALIZED QUESTIONS (optional, field-specific):
+- Computer Science: GRE score, programming languages, CS specialization, projects, math courses
+- Business: GMAT/GRE score, work experience, career goals, leadership experience, business courses
+- Engineering: GRE score, engineering branch, math/physics courses, lab experience, software tools
+- Medicine: MCAT score, clinical experience, research experience, pre-med courses, medical specialization
+- Sciences: GRE score, science specialization, research experience, lab skills, math background
+- Public Health: GRE score, statistics courses, field experience, PH specialization, undergraduate background
+- Arts & Humanities: GRE score, portfolio/writing samples, languages, specialization, research experience
+- Social Sciences: GRE score, research methods, fieldwork experience, specialization, quantitative skills
+- Education: GRE score, teaching experience, education specialization, age group preference, education courses
+- Law: LSAT score, legal experience, law specialization, writing experience, undergraduate background
 
-EXAMPLES:
-- User: "I'm engineer, want law school, GPA 3.5" → has_enough_info: true
-- User: "I also have LSAT 165" (after previous info) → should_reanalyze: true
-- User: "My GPA is actually 3.7" (correcting previous) → should_reanalyze: true
+LOGIC:
+- Set has_sufficient_info = true only if ALL 5 basic pieces are provided
+- Set needs_specialized_questions = true if: basic info is complete AND target field matches any major field (cs, business, engineering, medicine, sciences, public_health, arts, social_sciences, education, law) AND no specialized questions have been asked yet
+- Set specialized_field to the detected field, mapping user input to standard fields:
+  * "computer science", "cs", "software engineering", "data science" → "cs"
+  * "business", "mba", "business administration", "management" → "business"  
+  * "engineering", "mechanical engineering", "electrical engineering", etc. → "engineering"
+  * "medicine", "medical", "pre-med", "healthcare" → "medicine"
+  * "biology", "chemistry", "physics", "mathematics" → "sciences"
+  * "public health", "epidemiology", "health policy" → "public_health"
+  * "literature", "history", "philosophy", "art" → "arts"
+  * "psychology", "sociology", "political science" → "social_sciences"
+  * "education", "teaching", "pedagogy" → "education"
+  * "law", "legal studies", "jurisprudence" → "law"
+- Extract any specialized answers provided in specialized_answers object
+- Set is_responding_to_specialized = true if user is responding after specialized questions were shown (any message that provides specialized info or says they want to skip/proceed)
+- Set ready_to_analyze = true ONLY if: (user explicitly wants to start analysis AND has answered at least one specialized question) OR user says they want to skip specialized questions
 
-Return JSON format with all required fields.`;
+IMPORTANT: 
+- Use empty string "" for missing information
+- For missing_info array, use exact field names: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test"]
+
+Please extract information and return in JSON format.`;
 
     // 调用OpenAI进行信息提取
     const completion = await openai.chat.completions.create({

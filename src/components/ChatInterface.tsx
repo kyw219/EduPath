@@ -36,8 +36,8 @@ const SequentialLoader: React.FC<SequentialLoaderProps> = ({ analysisProgress = 
               <span className="text-white text-xs">✓</span>
             </div>
           ) : index === currentStepIndex && analysisProgress !== 'complete' ? (
-            // 当前步骤显示旋转动画
-            <div className={`animate-spin w-3 h-3 border-2 ${step.color} border-t-transparent rounded-full`}></div>
+            // 当前步骤显示旋转动画 - 更圆润的圆圈
+            <div className={`animate-spin w-3 h-3 border-2 ${step.color} border-r-transparent border-b-transparent rounded-full`}></div>
           ) : (
             // 未开始的步骤显示灰色圆点
             <div className="w-3 h-3 rounded-full bg-slate-600"></div>
@@ -114,7 +114,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 pb-20 scrollbar-hide">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -156,7 +156,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
             <div className="bg-slate-600 rounded-lg px-4 py-3 text-slate-200 text-sm max-w-sm">
               <div className="text-center space-y-3">
                 <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-teal-400 border-t-transparent rounded-full"></div>
                   <span className="font-medium">Analyzing the best programs for you...</span>
                 </div>
                 <SequentialLoader analysisProgress={analysisProgress} />
