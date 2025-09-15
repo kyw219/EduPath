@@ -275,14 +275,12 @@ Please share all this information at once!`;
           
         aiReply = `Excellent! I have your basic information.
 
-To give you even more accurate recommendations, I'd love to know a bit more about your ${extractedData.target_field} background:
+I'd love to know a bit more about your ${extractedData.target_field} background:
 
 🎯 ${specializedQuestions.title} (optional):
 ${questionsList}
 
-You can answer as many or as few as you'd like - I can analyze with what we have! 
-Just type 'analyze now' if you want to proceed immediately.
-
+You can answer as many or as few as you'd like.
 If you provide additional details later, I can always update your analysis for better matches! 🚀`;
       } else {
         aiReply = `Perfect! I have all the essential information. Starting analysis now... 🔄`;
@@ -293,12 +291,10 @@ If you provide additional details later, I can always update your analysis for b
         Object.values(extractedData.specialized_answers).some(val => val && val.trim() !== '');
       
       if (hasSpecializedInfo) {
-        aiReply = `Great! I have your enhanced profile information. Starting comprehensive analysis... 🔄`;
+        aiReply = `Excellent! I can analyze with what we have!
+If you provide additional details later, I can always update your analysis for better matches! 🚀`;
       } else {
-        aiReply = `Perfect! Starting analysis with your current information.
-
-Remember: If you think of additional details later, just let me know anytime! 
-I can update your profile and provide refined recommendations. 🔄`;
+        aiReply = `Perfect! Starting analysis... 🔄`;
       }
     } else {
       // 构建已获得信息的确认
