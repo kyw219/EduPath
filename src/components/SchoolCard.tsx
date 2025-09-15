@@ -236,13 +236,22 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
                 </div>
               </div>
 
+              {school.prerequisites && school.prerequisites !== 'Not specified' && (
+                <div>
+                  <label className="text-slate-400 text-xs font-medium">Prerequisites</label>
+                  <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
+                    <span className="text-slate-300 text-sm">
+                      {school.prerequisites}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-slate-400 text-xs font-medium">Other Requirements</label>
                 <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
                   <span className="text-slate-300 text-sm">
-                    {type === 'reach' && school.suggestions ? 
-                      school.suggestions : 
-                      "Research experience preferred"}
+                    {school.other_requirements || (type === 'reach' && school.suggestions ? school.suggestions : "Research experience preferred")}
                   </span>
                 </div>
               </div>
