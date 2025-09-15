@@ -114,7 +114,7 @@ const QualificationStatus: React.FC<QualificationStatusProps> = ({ school, userP
           <div key={index}>
             {/* 只显示标签，与左边对应 */}
             <label className="text-slate-400 text-xs font-medium invisible">{item.name}</label>
-            {/* 圆点容器，高度与左边的要求框对齐 */}
+            {/* 圆点容器，与左边的要求框完全对齐 */}
             <div className="mt-1 p-2 flex items-center justify-center border border-transparent rounded">
               {getQualificationIndicator(item.status)}
             </div>
