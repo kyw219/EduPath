@@ -136,6 +136,27 @@ function getDefaultValue(field) {
   return defaults[field] || "Not specified";
 }
 
+// 简单的国家名映射
+function getStandardCountryNames(text) {
+  const countries = [];
+  const lowerText = text.toLowerCase();
+  
+  if (lowerText.includes('uk') || lowerText.includes('united kingdom') || lowerText.includes('britain') || lowerText.includes('england')) {
+    countries.push('United Kingdom');
+  }
+  if (lowerText.includes('us') || lowerText.includes('usa') || lowerText.includes('united states') || lowerText.includes('america')) {
+    countries.push('United States');
+  }
+  if (lowerText.includes('canada')) {
+    countries.push('Canada');
+  }
+  if (lowerText.includes('australia')) {
+    countries.push('Australia');
+  }
+  
+  return [...new Set(countries)]; // 去重
+}
+
 export default async function handler(req, res) {
   // 只允许 GET 请求
   if (req.method !== 'GET') {
@@ -155,9 +176,9 @@ export default async function handler(req, res) {
     const connection = await mysql.createConnection(dbConfig);
 
     try {
-      // 获取用户档案向量
+      // 获取用户档案向量和原始档案文本
       const [userRows] = await connection.execute(
-        'SELECT profile_embedding FROM user_sessions WHERE session_id = ?',
+        'SELECT profile_embedding, user_profile FROM user_sessions WHERE session_id = ?',
         [analysisId]
       );
 
@@ -166,20 +187,35 @@ export default async function handler(req, res) {
       }
 
       const userVector = userRows[0].profile_embedding;
+      const userProfile = userRows[0].user_profile;
+      
+      // 提取用户偏好的国家
+      const preferredCountries = getStandardCountryNames(userProfile);
+      console.log('🌍 用户偏好国家:', preferredCountries);
 
       console.log('🔄 执行向量搜索...');
 
-      // 搜索 target schools (相似度高的) - 获取完整信息
-      const [targetRows] = await connection.execute(`
+      // 构建 target schools 查询
+      let targetSql = `
         SELECT 
           id, school_name, program_name, country_region, broad_category, specific_field,
           qs_ranking, degree_type, duration, program_details, language_requirements,
           program_url, graduate_school_url, crawl_status,
           VEC_COSINE_DISTANCE(embedding, ?) AS similarity
-        FROM schools 
-        ORDER BY similarity ASC 
-        LIMIT 3
-      `, [userVector]);
+        FROM schools`;
+      
+      let targetParams = [userVector];
+      
+      if (preferredCountries.length > 0) {
+        const placeholders = preferredCountries.map(() => '?').join(',');
+        targetSql += ` WHERE country_region IN (${placeholders})`;
+        targetParams.push(...preferredCountries);
+        console.log('🎯 Target schools - 应用国家过滤:', preferredCountries);
+      }
+      
+      targetSql += ` ORDER BY similarity ASC LIMIT 3`;
+      
+      const [targetRows] = await connection.execute(targetSql, targetParams);
 
       // 使用 LLM 结构化 target schools 数据
       const targetSchools = await Promise.all(targetRows.map(async row => {
@@ -199,18 +235,28 @@ export default async function handler(req, res) {
         };
       }));
 
-      // 搜索 reach schools (排名更高的学校) - 获取完整信息
-      const [reachRows] = await connection.execute(`
+      // 构建 reach schools 查询 (排名更高的学校)
+      let reachSql = `
         SELECT 
           id, school_name, program_name, country_region, broad_category, specific_field,
           qs_ranking, degree_type, duration, program_details, language_requirements,
           program_url, graduate_school_url, crawl_status,
           VEC_COSINE_DISTANCE(embedding, ?) AS similarity
         FROM schools 
-        WHERE qs_ranking <= 20
-        ORDER BY similarity ASC 
-        LIMIT 2
-      `, [userVector]);
+        WHERE qs_ranking <= 20`;
+      
+      let reachParams = [userVector];
+      
+      if (preferredCountries.length > 0) {
+        const placeholders = preferredCountries.map(() => '?').join(',');
+        reachSql += ` AND country_region IN (${placeholders})`;
+        reachParams.push(...preferredCountries);
+        console.log('🚀 Reach schools - 应用国家过滤:', preferredCountries);
+      }
+      
+      reachSql += ` ORDER BY similarity ASC LIMIT 2`;
+      
+      const [reachRows] = await connection.execute(reachSql, reachParams);
 
       // 使用 LLM 结构化 reach schools 数据
       const reachSchools = await Promise.all(reachRows.map(async row => {

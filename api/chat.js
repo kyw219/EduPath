@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         },
         gpa_score: {
           type: "string",
-          description: "User's GPA or average grade (e.g., 3.5/4.0, 85/100, or 'not provided')"
+          description: "User's GPA or average grade (e.g., 3.5/4.0, 85/100, or empty string if not provided)"
         },
         preferred_countries: {
           type: "array",
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         },
         language_test: {
           type: "string",
-          description: "TOEFL/IELTS score or status (e.g., 'TOEFL 100', 'IELTS 7.5', 'planning to take', 'not taken')"
+          description: "TOEFL/IELTS score or status (e.g., 'TOEFL 100', 'IELTS 7.5', 'planning to take', or empty string if not mentioned)"
         },
         additional_info: {
           type: "string",
@@ -71,8 +71,10 @@ Required information for analysis:
 4. Preferred countries/regions (field: preferred_countries)
 5. Language test status (field: language_test)
 
-Set has_sufficient_info to true only if ALL 5 pieces of information are provided.
-For missing_info array, use these exact field names: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test"]
+IMPORTANT: 
+- If information is not provided, use empty string "" instead of "not provided" or "not taken"
+- Set has_sufficient_info to true only if ALL 5 pieces of information are provided
+- For missing_info array, use these exact field names: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test"]
 
 Please extract information and return in JSON format.`;
 
@@ -136,14 +138,14 @@ Please share all this information at once!`;
         confirmation = `Got it! You're targeting ${extractedData.target_field} programs.\n\n`;
       }
       
-      // 添加已有的其他信息
-      if (extractedData.gpa_score) {
+      // 添加已有的其他信息（只显示已提供的信息）
+      if (extractedData.gpa_score && extractedData.gpa_score.trim() !== '') {
         confirmation += `Your GPA is ${extractedData.gpa_score}. `;
       }
-      if (extractedData.language_test) {
+      if (extractedData.language_test && extractedData.language_test.trim() !== '') {
         confirmation += `Your language test score is ${extractedData.language_test}. `;
       }
-      if (extractedData.preferred_countries && extractedData.preferred_countries.length > 0) {
+      if (extractedData.preferred_countries && extractedData.preferred_countries.length > 0 && extractedData.preferred_countries[0] !== '') {
         confirmation += `You're interested in studying in ${extractedData.preferred_countries.join(', ')}. `;
       }
       if (confirmation.includes('Your GPA') || confirmation.includes('Your language') || confirmation.includes('You\'re interested')) {
