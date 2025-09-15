@@ -14,111 +14,6 @@ interface QualificationStatusProps {
 }
 
 const QualificationStatus: React.FC<QualificationStatusProps> = ({ school, userProfile }) => {
-  
-  // 智能资格评估函数
-  const evaluateQualification = (
-    type: 'gpa' | 'language' | 'prerequisites' | 'degree' | 'other',
-    requirement: string
-  ): QualificationItem['status'] => {
-    if (!userProfile) {
-      return 'unknown';
-    }
-
-    const req = requirement?.toLowerCase() || '';
-    
-    switch (type) {
-      case 'gpa':
-        if (!req || req.includes('not specified') || req.includes('not required')) {
-          return 'met';
-        }
-        const gpaMatch = req.match(/(\d+\.?\d*)/);
-        if (gpaMatch) {
-          const requiredGPA = parseFloat(gpaMatch[1]);
-          return userProfile.gpa >= requiredGPA ? 'met' : 'not_met';
-        }
-        return 'unknown';
-
-      case 'language':
-        if (!req || req.includes('not specified') || req.includes('not required')) {
-          return 'met';
-        }
-        
-        // 检查TOEFL
-        const toeflMatch = req.match(/toefl[^0-9]*(\d+)/);
-        if (toeflMatch && userProfile.toefl) {
-          const requiredTOEFL = parseInt(toeflMatch[1]);
-          return userProfile.toefl >= requiredTOEFL ? 'met' : 'not_met';
-        }
-        
-        // 检查IELTS
-        const ieltsMatch = req.match(/ielts[^0-9]*(\d+\.?\d*)/);
-        if (ieltsMatch && userProfile.ielts) {
-          const requiredIELTS = parseFloat(ieltsMatch[1]);
-          return userProfile.ielts >= requiredIELTS ? 'met' : 'not_met';
-        }
-        
-        return 'not_met';
-
-      case 'prerequisites':
-        if (!req || req.includes('not specified') || req.includes('not required')) {
-          return 'met';
-        }
-        
-        // 提取关键词
-        const keywords = ['python', 'java', 'c++', 'data structures', 'algorithms', 'discrete mathematics', 'programming', 'mathematics'];
-        const foundKeywords = keywords.filter(keyword => req.includes(keyword.toLowerCase()));
-        const userKeywords = userProfile.background.map(bg => bg.toLowerCase());
-        
-        if (foundKeywords.length === 0) {
-          return 'unknown';
-        }
-        
-        const matchedKeywords = foundKeywords.filter(keyword => 
-          userKeywords.some(userKeyword => userKeyword.includes(keyword))
-        );
-        
-        if (matchedKeywords.length === foundKeywords.length) {
-          return 'met'; // 全部匹配
-        } else if (matchedKeywords.length > 0) {
-          return 'partial'; // 部分匹配
-        } else {
-          return 'not_met'; // 无匹配
-        }
-
-      case 'degree':
-        // 学位要求始终为绿色
-        return 'met';
-
-      case 'other':
-        if (!req || req.includes('not specified') || req.includes('not required')) {
-          return 'met';
-        }
-        
-        // 检查经验相关关键词
-        const expKeywords = ['research', 'internship', 'work experience', 'software development', 'academic record'];
-        const foundExpKeywords = expKeywords.filter(keyword => req.includes(keyword.toLowerCase()));
-        const userExp = userProfile.experience.map(exp => exp.toLowerCase());
-        
-        if (foundExpKeywords.length === 0) {
-          return req.includes('recommended') ? 'partial' : 'unknown';
-        }
-        
-        const matchedExpKeywords = foundExpKeywords.filter(keyword => 
-          userExp.some(userExpItem => userExpItem.includes(keyword))
-        );
-        
-        if (matchedExpKeywords.length === foundExpKeywords.length) {
-          return 'met'; // 全部匹配
-        } else if (matchedExpKeywords.length > 0) {
-          return 'partial'; // 部分匹配
-        } else {
-          return 'not_met'; // 无匹配
-        }
-
-      default:
-        return 'unknown';
-    }
-  };
 
   // 获取用户信息显示
   const getUserValue = (type: 'gpa' | 'language' | 'prerequisites' | 'degree' | 'other'): string => {
@@ -145,35 +40,35 @@ const QualificationStatus: React.FC<QualificationStatusProps> = ({ school, userP
     }
   };
 
-  // 资格数据
+  // 资格数据 - 使用LLM评估结果
   const qualificationData: QualificationItem[] = [
     {
       name: 'GPA',
-      status: evaluateQualification('gpa', school.gpa_requirement),
+      status: school.qualification_status?.gpa?.status || 'unknown',
       requiredValue: school.gpa_requirement,
       userValue: getUserValue('gpa')
     },
     {
       name: 'Language Score',
-      status: evaluateQualification('language', school.language_requirement),
+      status: school.qualification_status?.language?.status || 'unknown',
       requiredValue: school.language_requirement,
       userValue: getUserValue('language')
     },
     {
       name: 'Prerequisites',
-      status: evaluateQualification('prerequisites', school.prerequisite_courses),
+      status: school.qualification_status?.prerequisites?.status || 'unknown',
       requiredValue: school.prerequisite_courses,
       userValue: getUserValue('prerequisites')
     },
     {
       name: 'Degree Requirement',
-      status: evaluateQualification('degree', school.degree_requirement),
+      status: school.qualification_status?.degree?.status || 'unknown',
       requiredValue: school.degree_requirement,
       userValue: getUserValue('degree')
     },
     {
       name: 'Other Requirements',
-      status: evaluateQualification('other', school.other_requirements),
+      status: school.qualification_status?.other?.status || 'unknown',
       requiredValue: school.other_requirements,
       userValue: getUserValue('other')
     }

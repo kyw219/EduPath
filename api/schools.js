@@ -30,6 +30,55 @@ function cleanGPTResponse(response) {
   return cleaned.trim();
 }
 
+// LLM 资格评估函数
+async function evaluateQualifications(userProfile, schoolData, structuredData) {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{
+        role: "system",
+        content: "You are an admissions expert. Evaluate if a user meets university requirements and return ONLY valid JSON."
+      }, {
+        role: "user",
+        content: `Evaluate qualification status for this user against school requirements:
+
+USER PROFILE: ${userProfile}
+
+SCHOOL: ${schoolData.school_name} - ${schoolData.program_name}
+REQUIREMENTS:
+- GPA: ${structuredData.gpa_requirement}
+- Language: ${structuredData.language_requirement} 
+- Prerequisites: ${structuredData.prerequisite_courses}
+- Degree: ${structuredData.degree_requirement}
+- Other: ${structuredData.other_requirements}
+
+Return JSON with qualification status for each category:
+{
+  "gpa": {"status": "met|partial|not_met|unknown", "reason": "brief explanation"},
+  "language": {"status": "met|partial|not_met|unknown", "reason": "brief explanation"},
+  "prerequisites": {"status": "met|partial|not_met|unknown", "reason": "brief explanation"},
+  "degree": {"status": "met|partial|not_met|unknown", "reason": "brief explanation"},
+  "other": {"status": "met|partial|not_met|unknown", "reason": "brief explanation"}
+}`
+      }],
+      response_format: { type: "json_object" },
+      max_tokens: 400,
+      temperature: 0
+    });
+
+    return JSON.parse(completion.choices[0].message.content);
+  } catch (error) {
+    console.error('❌ LLM资格评估失败:', error);
+    return {
+      gpa: { status: 'unknown', reason: 'Evaluation failed' },
+      language: { status: 'unknown', reason: 'Evaluation failed' },
+      prerequisites: { status: 'unknown', reason: 'Evaluation failed' },
+      degree: { status: 'unknown', reason: 'Evaluation failed' },
+      other: { status: 'unknown', reason: 'Evaluation failed' }
+    };
+  }
+}
+
 // LLM 结构化数据函数
 async function structureSchoolData(schoolData) {
   try {
@@ -330,6 +379,7 @@ export default async function handler(req, res) {
       // 处理target schools (Target Schools)
       const processedTargetSchools = await Promise.all(targetSchools.map(async row => {
         const structuredData = await structureSchoolData(row);
+        const qualificationStatus = await evaluateQualifications(userProfile, row, structuredData);
         return {
           school: row.school_name,
           program: row.program_name,
@@ -342,13 +392,15 @@ export default async function handler(req, res) {
           language_requirement: structuredData.language_requirement,
           prerequisite_courses: structuredData.prerequisite_courses,
           degree_requirement: structuredData.degree_requirement,
-          other_requirements: structuredData.other_requirements
+          other_requirements: structuredData.other_requirements,
+          qualification_status: qualificationStatus
         };
       }));
 
       // 处理safe schools (Safe Choice)
       const safeSchools = await Promise.all(safeChoice.map(async row => {
         const structuredData = await structureSchoolData(row);
+        const qualificationStatus = await evaluateQualifications(userProfile, row, structuredData);
         return {
           school: row.school_name,
           program: row.program_name,
@@ -361,13 +413,15 @@ export default async function handler(req, res) {
           language_requirement: structuredData.language_requirement,
           prerequisite_courses: structuredData.prerequisite_courses,
           degree_requirement: structuredData.degree_requirement,
-          other_requirements: structuredData.other_requirements
+          other_requirements: structuredData.other_requirements,
+          qualification_status: qualificationStatus
         };
       }));
 
       // 处理reach schools (Dream Schools)
       const reachSchools = await Promise.all(dreamSchools.map(async row => {
         const structuredData = await structureSchoolData(row);
+        const qualificationStatus = await evaluateQualifications(userProfile, row, structuredData);
         return {
           school: row.school_name,
           program: row.program_name,
@@ -382,7 +436,8 @@ export default async function handler(req, res) {
           language_requirement: structuredData.language_requirement,
           prerequisite_courses: structuredData.prerequisite_courses,
           degree_requirement: structuredData.degree_requirement,
-          other_requirements: structuredData.other_requirements
+          other_requirements: structuredData.other_requirements,
+          qualification_status: qualificationStatus
         };
       }));
 

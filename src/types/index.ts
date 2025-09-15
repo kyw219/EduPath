@@ -19,6 +19,13 @@ export interface School {
   other_requirements: string;
   gaps?: string[];
   suggestions?: string;
+  qualification_status?: {
+    gpa: { status: 'met' | 'partial' | 'not_met' | 'unknown'; reason: string };
+    language: { status: 'met' | 'partial' | 'not_met' | 'unknown'; reason: string };
+    prerequisites: { status: 'met' | 'partial' | 'not_met' | 'unknown'; reason: string };
+    degree: { status: 'met' | 'partial' | 'not_met' | 'unknown'; reason: string };
+    other: { status: 'met' | 'partial' | 'not_met' | 'unknown'; reason: string };
+  };
 }
 
 export interface TimelineTask {
