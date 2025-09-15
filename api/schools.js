@@ -74,16 +74,19 @@ ADDITIONAL CONTEXT:
 Based on ALL the above information, extract and return a JSON object with exactly these fields:
 {
   "tuition": "extracted/estimated tuition amount in USD format",
-  "language_requirements": "specific TOEFL/IELTS requirements",
-  "admission_requirements": "GPA, degree, and academic requirements",
+  "language_requirements": "complete language requirements with specific scores",
+  "admission_requirements": "comprehensive admission requirements including GPA, degree, academic background, language scores, and any additional requirements",
   "prerequisites": "prerequisite courses or background needed",
   "other_requirements": "work experience, portfolio, tests, or other special requirements"
 }
 
-IMPORTANT: Use the detailed program information to provide accurate, specific requirements rather than generic ones.`
+IMPORTANT: 
+- For admission_requirements, include ALL requirements in one comprehensive field: language scores, GPA, degree, academic prerequisites, etc.
+- Be specific and detailed, extract exact numbers and requirements from the program details
+- Don't just summarize - include the complete information available`
       }],
       response_format: { type: "json_object" }, // 强制 JSON 输出
-      max_tokens: 400,
+      max_tokens: 600,
       temperature: 0
     });
 
