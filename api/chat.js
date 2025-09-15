@@ -116,7 +116,7 @@ LOGIC:
 - Set specialized_field to the detected field (cs, business, engineering, medicine, sciences, public_health, arts, social_sciences, education, law)
 - Extract any specialized answers provided in specialized_answers object
 - Set is_responding_to_specialized = true if user is responding after specialized questions were shown (any message that provides specialized info or says they want to skip/proceed)
-- Set ready_to_analyze = true ONLY if: (user explicitly wants to start analysis AND has answered at least one specialized question) OR user says they want to skip specialized questions
+- Set ready_to_analyze = true ONLY if: user explicitly wants to start analysis (says "analyze", "start analysis", "go", "proceed", etc.) OR user explicitly says they want to skip specialized questions
 
 IMPORTANT: 
 - Use empty string "" for missing information
@@ -295,9 +295,31 @@ If you provide additional details later, I can always update your analysis for b
       aiReply = `Perfect! Starting analysis... 🔄`;
     } else if (extractedData.has_sufficient_info && extractedData.is_responding_to_specialized && !extractedData.ready_to_analyze) {
       // 用户回答了专业问题但没有明确要求分析
-      aiReply = `Great! I have more details about your background. 
-      
-When you're ready for your personalized school recommendations, just say "start analysis" or "analyze"! 🚀`;
+      aiReply = `Excellent! Thank you for providing those additional details about your ${extractedData.target_field} background.
+
+I now have a comprehensive understanding of your profile:
+• Academic Background: ${extractedData.current_major}
+• Target Program: ${extractedData.target_field}
+• GPA: ${extractedData.gpa_score}
+• Language Score: ${extractedData.language_test}
+• Preferred Countries: ${extractedData.preferred_countries?.join(', ')}
+
+With this information, I can provide you with highly personalized school recommendations and create a detailed application timeline.
+
+When you're ready to see your analysis results, just say "start analysis" or "analyze"! 🚀`;
+    } else if (extractedData.has_sufficient_info && !extractedData.needs_specialized_questions && !extractedData.ready_to_analyze) {
+      // 用户提供了基本信息，但专业不需要特殊问题，且没有明确要求分析
+      aiReply = `Perfect! I have all the essential information I need:
+
+• Academic Background: ${extractedData.current_major}
+• Target Program: ${extractedData.target_field}
+• GPA: ${extractedData.gpa_score}
+• Language Score: ${extractedData.language_test}
+• Preferred Countries: ${extractedData.preferred_countries?.join(', ')}
+
+I'm ready to analyze 50+ programs and create your personalized recommendations!
+
+Just say "start analysis" or "analyze" when you're ready! 🎯`;
     } else {
       // 构建已获得信息的确认
       let confirmation = "";
@@ -358,10 +380,7 @@ When you're ready for your personalized school recommendations, just say "start 
       reply: aiReply,
       extractedProfile: extractedData,
       hasBasicInfo: extractedData.has_sufficient_info,
-      shouldAnalyze: extractedData.has_sufficient_info && (
-        (extractedData.ready_to_analyze && extractedData.is_responding_to_specialized) || 
-        !extractedData.needs_specialized_questions
-      )
+      shouldAnalyze: extractedData.has_sufficient_info && extractedData.ready_to_analyze
     });
 
   } catch (error) {

@@ -300,70 +300,42 @@ export default async function handler(req, res) {
       const [candidateRows] = await connection.execute(candidatesSql, candidatesParams);
       console.log(`🔍 找到 ${candidateRows.length} 个候选学校`);
 
-      // 智能三分类算法 - 确保每所学校只出现一次，逻辑合理分配
+      // 智能三分类算法 - 混合策略：排名 + 相似度动态分配
       function classifySchools(candidates) {
         const dreamSchools = [];
         const targetSchools = [];
         const safeChoice = [];
-        const usedSchools = new Set(); // 记录已使用的学校
+        const usedSchools = new Set();
         
-        // 按相似度排序（最相似的在前面）
-        const sortedCandidates = [...candidates].sort((a, b) => a.similarity - b.similarity);
-        
-        // 第一轮：选择Dream Schools (Top 30排名的学校，不考虑相似度)
-        sortedCandidates.forEach(school => {
-          const schoolName = school.school_name;
-          const ranking = school.qs_ranking;
-          
-          if (usedSchools.has(schoolName)) return;
-          
-          if (ranking <= 30 && dreamSchools.length < 4) {
+        // 第一步：Dream Schools - 强制选择 Top 30 排名的学校（不管相似度）
+        const top30Schools = candidates.filter(school => school.qs_ranking <= 30);
+        top30Schools.forEach(school => {
+          if (dreamSchools.length < 4) {
             dreamSchools.push(school);
-            usedSchools.add(schoolName);
+            usedSchools.add(school.school_name);
           }
         });
         
-        // 第二轮：选择Target Schools (相似度最高的学校，排名31-80优先)
-        sortedCandidates.forEach(school => {
-          const schoolName = school.school_name;
-          const ranking = school.qs_ranking;
-          
-          if (usedSchools.has(schoolName)) return;
-          
-          // 优先选择排名31-80的高相似度学校
-          if (ranking > 30 && ranking <= 80 && targetSchools.length < 6) {
-            targetSchools.push(school);
-            usedSchools.add(schoolName);
-          }
-        });
+        // 第二步：获取剩余学校，按相似度排序（相似度越小越好）
+        const remainingSchools = candidates.filter(school => !usedSchools.has(school.school_name));
+        const sortedByMatch = remainingSchools.sort((a, b) => a.similarity - b.similarity);
         
-        // 第三轮：继续填充Target Schools (如果还没满，选择其他高相似度学校)
-        if (targetSchools.length < 6) {
-          sortedCandidates.forEach(school => {
-            const schoolName = school.school_name;
-            
-            if (usedSchools.has(schoolName)) return;
-            if (targetSchools.length >= 6) return;
-            
-            targetSchools.push(school);
-            usedSchools.add(schoolName);
-          });
+        // 第三步：动态划分 Safe 和 Target
+        const totalRemaining = sortedByMatch.length;
+        const safeCount = Math.min(4, Math.ceil(totalRemaining * 0.3)); // 前30%作为Safe
+        const targetCount = Math.min(6, totalRemaining - safeCount);     // 剩余作为Target
+        
+        // Safe Schools: 相似度最高的前30%
+        for (let i = 0; i < safeCount && i < sortedByMatch.length; i++) {
+          safeChoice.push(sortedByMatch[i]);
+          usedSchools.add(sortedByMatch[i].school_name);
         }
         
-        // 第四轮：选择Safe Choice (剩余的高相似度学校，排名较低但匹配度高)
-        sortedCandidates.forEach(school => {
-          const schoolName = school.school_name;
-          const ranking = school.qs_ranking;
-          
-          if (usedSchools.has(schoolName)) return;
-          if (safeChoice.length >= 3) return;
-          
-          // 优先选择排名较低但相似度高的学校作为保底
-          if (ranking > 50) {
-            safeChoice.push(school);
-            usedSchools.add(schoolName);
-          }
-        });
+        // Target Schools: 剩余的学校
+        for (let i = safeCount; i < safeCount + targetCount && i < sortedByMatch.length; i++) {
+          targetSchools.push(sortedByMatch[i]);
+          usedSchools.add(sortedByMatch[i].school_name);
+        }
         
         return { dreamSchools, targetSchools, safeChoice };
       }
@@ -376,14 +348,17 @@ export default async function handler(req, res) {
       console.log('🎯 Target Schools:', targetSchools.map(s => s.school_name));
       console.log('🛡️ Safe Choice:', safeChoice.map(s => s.school_name));
       
-      // 处理target schools (Target Schools)
+      // 处理target schools (Target Schools) - 中等match score (70-84)
       const processedTargetSchools = await Promise.all(targetSchools.map(async row => {
         const structuredData = await structureSchoolData(row);
         const qualificationStatus = await evaluateQualifications(userProfile, row, structuredData);
+        const baseScore = Math.round((1 - row.similarity) * 1000) / 10;
+        const targetScore = Math.max(70.0, Math.min(84.0, baseScore - 5)); // 强制在70-84区间
+        
         return {
           school: row.school_name,
           program: row.program_name,
-          match_score: Math.round((1 - row.similarity) * 1000) / 10,
+          match_score: targetScore,
           ranking: row.qs_ranking,
           deadline: "2025-01-15",
           tuition: structuredData.tuition,
@@ -397,14 +372,17 @@ export default async function handler(req, res) {
         };
       }));
 
-      // 处理safe schools (Safe Choice)
+      // 处理safe schools (Safe Choice) - 最高match score (85-95)
       const safeSchools = await Promise.all(safeChoice.map(async row => {
         const structuredData = await structureSchoolData(row);
         const qualificationStatus = await evaluateQualifications(userProfile, row, structuredData);
+        const baseScore = Math.round((1 - row.similarity) * 1000) / 10;
+        const safeScore = Math.max(85.0, Math.min(95.0, baseScore + 5)); // 强制在85-95区间
+        
         return {
           school: row.school_name,
           program: row.program_name,
-          match_score: Math.round((1 - row.similarity) * 1000) / 10,
+          match_score: safeScore,
           ranking: row.qs_ranking,
           deadline: "2025-01-15",
           tuition: structuredData.tuition,
@@ -418,14 +396,17 @@ export default async function handler(req, res) {
         };
       }));
 
-      // 处理reach schools (Dream Schools)
+      // 处理reach schools (Dream Schools) - 最低match score (50-69)
       const reachSchools = await Promise.all(dreamSchools.map(async row => {
         const structuredData = await structureSchoolData(row);
         const qualificationStatus = await evaluateQualifications(userProfile, row, structuredData);
+        const baseScore = Math.round((1 - row.similarity) * 1000) / 10;
+        const dreamScore = Math.max(50.0, Math.min(69.0, baseScore - 15)); // 强制在50-69区间
+        
         return {
           school: row.school_name,
           program: row.program_name,
-          match_score: Math.max(50.0, Math.round((1 - row.similarity) * 1000) / 10 - 1.5),
+          match_score: dreamScore,
           ranking: row.qs_ranking,
           gaps: ["Advanced Math", "Research Experience"],
           suggestions: "Complete prerequisite courses and gain research experience",
