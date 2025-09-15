@@ -112,11 +112,11 @@ SPECIALIZED QUESTIONS (optional, field-specific):
 
 LOGIC:
 - Set has_sufficient_info = true only if ALL 5 basic pieces are provided
-- Set needs_specialized_questions = true ONLY if: basic info is complete AND target field matches major fields AND no specialized info has been provided yet
+- Set needs_specialized_questions = true if: basic info is complete AND target field matches major fields (cs, business, engineering, etc.) AND user has NOT been asked specialized questions yet
 - Set specialized_field to the detected field (cs, business, engineering, medicine, sciences, public_health, arts, social_sciences, education, law)
 - Extract any specialized answers provided in specialized_answers object
 - Set is_responding_to_specialized = true if user is responding after specialized questions were shown (any message that provides specialized info or says they want to skip/proceed)
-- Set ready_to_analyze = true if user explicitly wants to start analysis (says "analyze", "start", "go", etc.)
+- Set ready_to_analyze = true ONLY if user explicitly wants to start analysis (says "analyze", "start", "go", etc.) OR if they've answered specialized questions
 
 IMPORTANT: 
 - Use empty string "" for missing information
@@ -269,7 +269,7 @@ I need these details to recommend the best schools for you:
 The more detailed your information, the more precise my recommendations will be 🎯
 
 Please share all this information at once!`;
-    } else if (extractedData.has_sufficient_info && extractedData.needs_specialized_questions && !extractedData.ready_to_analyze) {
+    } else if (extractedData.has_sufficient_info && extractedData.needs_specialized_questions) {
       // 基础信息完整，触发专业特定问题
       const specializedQuestions = getSpecializedQuestions(extractedData.specialized_field);
       
@@ -290,16 +290,9 @@ If you provide additional details later, I can always update your analysis for b
       } else {
         aiReply = `Perfect! I have all the essential information. Starting analysis now... 🔄`;
       }
-    } else if (extractedData.has_sufficient_info) {
-      // 准备开始分析或已有专业信息
-      const hasSpecializedInfo = extractedData.specialized_answers && 
-        Object.values(extractedData.specialized_answers).some(val => val && val.trim() !== '');
-      
-      if (extractedData.is_responding_to_specialized || hasSpecializedInfo) {
-        aiReply = `Perfect! Starting analysis... 🔄`;
-      } else {
-        aiReply = `Perfect! Starting analysis... 🔄`;
-      }
+    } else if (extractedData.has_sufficient_info && (extractedData.ready_to_analyze || extractedData.is_responding_to_specialized)) {
+      // 用户明确要求分析或已回答专业问题
+      aiReply = `Perfect! Starting analysis... 🔄`;
     } else {
       // 构建已获得信息的确认
       let confirmation = "";
@@ -362,8 +355,8 @@ If you provide additional details later, I can always update your analysis for b
       hasBasicInfo: extractedData.has_sufficient_info,
       shouldAnalyze: extractedData.has_sufficient_info && (
         extractedData.ready_to_analyze || 
-        !extractedData.needs_specialized_questions || 
-        extractedData.is_responding_to_specialized
+        extractedData.is_responding_to_specialized ||
+        !extractedData.needs_specialized_questions
       )
     });
 
