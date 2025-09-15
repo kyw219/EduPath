@@ -209,6 +209,9 @@ export default async function handler(req, res) {
       const userVector = JSON.parse(userRows[0].profile_embedding);
       const userProfile = userRows[0].user_profile;
       
+      // 将向量转换为TiDB兼容的字符串格式
+      const vectorString = `[${userVector.join(',')}]`;
+      
       // 提取用户偏好的国家
       const preferredCountries = getStandardCountryNames(userProfile);
       console.log('🌍 用户偏好国家:', preferredCountries);
@@ -224,7 +227,7 @@ export default async function handler(req, res) {
           VEC_COSINE_DISTANCE(embedding, ?) AS similarity
         FROM schools`;
       
-      let targetParams = [userVector];
+      let targetParams = [vectorString];
       
       if (preferredCountries.length > 0) {
         const placeholders = preferredCountries.map(() => '?').join(',');
@@ -266,7 +269,7 @@ export default async function handler(req, res) {
         FROM schools 
         WHERE qs_ranking <= 20`;
       
-      let reachParams = [userVector];
+      let reachParams = [vectorString];
       
       if (preferredCountries.length > 0) {
         const placeholders = preferredCountries.map(() => '?').join(',');
