@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     const sessionId = uuidv4();
 
     // 使用传入的用户档案
-    const profileText = `${userProfile.current_major} ${userProfile.target_field} ${userProfile.additional_info || ''}`;
+    const profileText = `${userProfile.current_major} ${userProfile.target_field} GPA: ${userProfile.gpa_score} Countries: ${userProfile.preferred_countries?.join(', ')} Language: ${userProfile.language_test} ${userProfile.additional_info || ''}`;
 
     console.log('🔄 向量化用户档案...');
     
