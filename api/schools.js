@@ -206,7 +206,7 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'Session not found' });
       }
 
-      const userVector = userRows[0].profile_embedding;
+      const userVector = JSON.parse(userRows[0].profile_embedding);
       const userProfile = userRows[0].user_profile;
       
       // 提取用户偏好的国家
