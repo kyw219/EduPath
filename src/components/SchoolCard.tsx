@@ -38,20 +38,10 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
     return '#F97316'; // orange
   };
 
-  // Generate full program name from short program name
+  // Use the actual program name from the API
   const getFullProgramName = (program: string) => {
-    // This would ideally come from the API data
-    // For now, we'll generate a reasonable full name
-    if (program.toLowerCase().includes('computer science')) {
-      return 'Master of Science in Computer Science';
-    }
-    if (program.toLowerCase().includes('business')) {
-      return 'Master of Business Administration';
-    }
-    if (program.toLowerCase().includes('engineering')) {
-      return 'Master of Engineering';
-    }
-    return `Master of Science in ${program}`;
+    // Return the actual program name from the API
+    return program;
   };
 
 
