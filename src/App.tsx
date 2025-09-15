@@ -10,25 +10,30 @@ import { intelligentChat, analyzeChat, getSchools, getTimeline, adjustSchools } 
 
 function App() {
   const [activeTab, setActiveTab] = useState('target');
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: 'assistant',
-      content: `Hi! Welcome to EduPath AI! 👋 
-
-I need two basic pieces of information to recommend the best schools for you:
-1️⃣ What's your current major/background?
-2️⃣ What graduate program are you targeting?
-
-Of course, the more you tell me, the better! For example: GPA, relevant experience, location preferences, budget, etc. The more detailed your information, the more precise my recommendations will be 🎯
-
-Please share all this information at once!`
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [schoolsData, setSchoolsData] = useState<SchoolsResponse | null>(null);
   const [timelineData, setTimelineData] = useState<TimelineResponse | null>(null);
   const [showChat, setShowChat] = useState(true);
+
+  // 首次加载时自动获取欢迎消息
+  useEffect(() => {
+    const initializeChat = async () => {
+      if (messages.length === 0) {
+        try {
+          const chatResponse = await intelligentChat([{ role: 'user', content: 'hi' }]);
+          setMessages([{
+            role: 'assistant',
+            content: chatResponse.reply
+          }]);
+        } catch (error) {
+          console.error('Failed to initialize chat:', error);
+        }
+      }
+    };
+    initializeChat();
+  }, []);
 
   const handleSendMessage = async (message: string) => {
     const newUserMessage: ChatMessage = { role: 'user', content: message };

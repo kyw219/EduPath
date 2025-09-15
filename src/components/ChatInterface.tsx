@@ -21,6 +21,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
     scrollToBottom();
   }, [messages]);
 
+
   const handleSend = () => {
     if (inputMessage.trim() && !isAnalyzing) {
       onSendMessage(inputMessage);
