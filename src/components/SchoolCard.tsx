@@ -56,7 +56,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
     return `Master of Science in ${program}`;
   };
 
-  // 简单状态计算函数
+  // Simple status calculation function
   const calculateStatus = (requirement: string): QualificationItem['status'] => {
     if (!requirement || requirement.toLowerCase().includes('not required') || requirement.toLowerCase().includes('not specified')) {
       return 'met';
@@ -64,28 +64,33 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
     if (requirement.toLowerCase().includes('preferred') || requirement.toLowerCase().includes('recommended')) {
       return 'partial';
     }
-    return 'not_met'; // 默认需要满足
+    return 'not_met'; // Default requires meeting
   };
 
-  // 简化的 qualification data - 只显示标题和状态
+  // Qualification data matching Admission Requirements order
   const qualificationData: QualificationItem[] = [
     {
-      name: '语言成绩',
+      name: 'GPA',
+      status: calculateStatus(school.gpa_requirement),
+      requiredValue: school.gpa_requirement
+    },
+    {
+      name: 'Language Score',
       status: calculateStatus(school.language_requirement),
       requiredValue: school.language_requirement
     },
     {
-      name: '先修课要求',
+      name: 'Prerequisites',
       status: calculateStatus(school.prerequisite_courses),
       requiredValue: school.prerequisite_courses
     },
     {
-      name: '学位要求',
+      name: 'Degree Requirement',
       status: calculateStatus(school.degree_requirement),
       requiredValue: school.degree_requirement
     },
     {
-      name: '其他要求',
+      name: 'Other Requirements',
       status: calculateStatus(school.other_requirements),
       requiredValue: school.other_requirements
     }
@@ -202,6 +207,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
                   <span className="text-slate-300 text-sm">
                     {school.school.includes('Hong Kong') ? 'Hong Kong' : 
                      school.school.includes('California') ? 'California, USA' :
+                     school.school.includes('Chicago') ? 'Chicago, USA' :
                      school.school.includes('Tokyo') ? 'Tokyo, Japan' : 'Location TBD'}
                   </span>
                 </div>
@@ -211,6 +217,22 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
                 <label className="text-slate-400 text-xs font-medium">Duration</label>
                 <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
                   <span className="text-slate-300 text-sm">{school.duration || "2 years"}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-slate-400 text-xs font-medium">Application Period</label>
+                <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400 text-xs">Opens:</span>
+                      <span className="text-slate-300 text-sm">{school.application_opens || "Sep 1, 2024"}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400 text-xs">Deadline:</span>
+                      <span className="text-slate-300 text-sm">{school.deadline || "Dec 15, 2024"}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -233,28 +255,28 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
               </div>
 
               <div>
-                <label className="text-slate-400 text-xs font-medium">语言成绩</label>
+                <label className="text-slate-400 text-xs font-medium">Language Score</label>
                 <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
                   <span className="text-slate-300 text-sm">{school.language_requirement}</span>
                 </div>
               </div>
 
               <div>
-                <label className="text-slate-400 text-xs font-medium">先修课要求</label>
+                <label className="text-slate-400 text-xs font-medium">Prerequisites</label>
                 <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
                   <span className="text-slate-300 text-sm">{school.prerequisite_courses}</span>
                 </div>
               </div>
 
               <div>
-                <label className="text-slate-400 text-xs font-medium">学位要求</label>
+                <label className="text-slate-400 text-xs font-medium">Degree Requirement</label>
                 <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
                   <span className="text-slate-300 text-sm">{school.degree_requirement}</span>
                 </div>
               </div>
 
               <div>
-                <label className="text-slate-400 text-xs font-medium">其他要求</label>
+                <label className="text-slate-400 text-xs font-medium">Other Requirements</label>
                 <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
                   <span className="text-slate-300 text-sm">{school.other_requirements}</span>
                 </div>

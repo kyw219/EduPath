@@ -9,6 +9,7 @@ export interface School {
   match_score: number;
   ranking: number;
   deadline: string;
+  application_opens?: string; // New field for application opening date
   tuition: string;
   duration: string;
   gpa_requirement: string;
