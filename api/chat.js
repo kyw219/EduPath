@@ -45,9 +45,21 @@ export default async function handler(req, res) {
           type: "string",
           description: "Any other relevant information (GRE/GMAT/LSAT scores, work experience, projects, etc.)"
         },
-        has_enough_info: {
+        has_sufficient_info: {
           type: "boolean",
           description: "Whether there is enough information to provide school recommendations (at least major, target field, and GPA)"
+        },
+        needs_specialized_questions: {
+          type: "boolean",
+          description: "Always set to false - we skip specialized questions"
+        },
+        is_responding_to_specialized: {
+          type: "boolean",
+          description: "Always set to false"
+        },
+        ready_to_analyze: {
+          type: "boolean", 
+          description: "Set to true if has_sufficient_info is true"
         },
         should_reanalyze: {
           type: "boolean",
@@ -59,7 +71,7 @@ export default async function handler(req, res) {
           description: "List of important missing information that would improve recommendations"
         }
       },
-      required: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test", "additional_info", "has_enough_info", "should_reanalyze", "missing_info"]
+      required: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test", "additional_info", "has_sufficient_info", "needs_specialized_questions", "is_responding_to_specialized", "ready_to_analyze", "should_reanalyze", "missing_info"]
     };
 
     // 智能信息提取提示词
