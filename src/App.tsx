@@ -24,53 +24,89 @@ function App() {
   // 用户档案状态 - 从聊天中提取
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // 从API提取的数据创建用户档案
-  const createUserProfileFromExtracted = (extractedData: any): UserProfile => {
-    // 解析GPA
+  // 从聊天消息中按序号提取用户回答
+  const extractUserProfileFromMessages = (): UserProfile => {
     let gpa = 0;
-    if (extractedData.gpa_score) {
-      const gpaMatch = extractedData.gpa_score.match(/([0-9]+\.?[0-9]*)/);
-      if (gpaMatch) {
-        gpa = parseFloat(gpaMatch[1]);
-      }
-    }
-
-    // 解析语言成绩
     let toefl: number | undefined;
     let ielts: number | undefined;
-    if (extractedData.language_test) {
-      const toeflMatch = extractedData.language_test.match(/(\d{2,3})/);
-      if (toeflMatch) {
-        const score = parseInt(toeflMatch[1]);
-        if (score >= 80 && score <= 120) {
-          toefl = score;
-        } else if (score >= 4 && score <= 9) {
-          ielts = score;
+    const background: string[] = [];
+    const experience: string[] = [];
+
+    console.log('🔍 提取用户信息，当前消息:', messages);
+
+    // 遍历用户消息，查找编号回答
+    messages.forEach((message, index) => {
+      if (message.role === 'user') {
+        const content = message.content.toLowerCase();
+        console.log(`📝 消息 ${index}:`, content);
+        
+        // 更灵活的提取逻辑 - 支持多种格式
+        
+        // 1. GPA (寻找数字，可能在"1."后面或单独出现)
+        const gpaMatch = content.match(/(?:1\.?\s*)?([0-9]+\.?[0-9]*)\s*(?:\/4|gpa|out of 4)?/);
+        if (gpaMatch) {
+          const gpaValue = parseFloat(gpaMatch[1]);
+          if (gpaValue >= 1 && gpaValue <= 4) { // 合理的GPA范围
+            gpa = gpaValue;
+            console.log('✅ 找到GPA:', gpa);
+          }
         }
+        
+        // 2. 编程语言 (更灵活的匹配)
+        if (content.includes('python')) background.push('Python');
+        if (content.includes('java') && !content.includes('javascript')) background.push('Java');
+        if (content.includes('c++') || content.includes('cpp')) background.push('C++');
+        if (content.includes('javascript') || content.includes('js')) background.push('JavaScript');
+        
+        // 3. 语言成绩 (寻找两位或三位数字)
+        const langMatch = content.match(/(?:3\.?\s*)?(\d{2,3})(?!\d)/);
+        if (langMatch) {
+          const score = parseInt(langMatch[1]);
+          if (score >= 80 && score <= 120) {
+            toefl = score; // TOEFL范围
+            console.log('✅ 找到TOEFL:', toefl);
+          } else if (score >= 4 && score <= 9) {
+            ielts = score / 10; // 可能是整数形式的IELTS
+            console.log('✅ 找到IELTS:', ielts);
+          }
+        }
+        
+        // 也检查小数形式的IELTS
+        const ieltsMatch = content.match(/(\d\.\d)/);
+        if (ieltsMatch) {
+          const score = parseFloat(ieltsMatch[1]);
+          if (score >= 4.0 && score <= 9.0) {
+            ielts = score;
+            console.log('✅ 找到IELTS (小数):', ielts);
+          }
+        }
+        
+        // 4. 项目经验
+        if (content.includes('internship')) experience.push('Internship');
+        if (content.includes('research')) experience.push('Research');
+        if (content.includes('project')) experience.push('Course Projects');
+        if (content.includes('work') && !content.includes('coursework')) experience.push('Work Experience');
+        
+        // 5. 数学课程 (更灵活的匹配)
+        if (content.includes('linear algebra') || content.includes('linear algrbra')) background.push('Linear Algebra');
+        if (content.includes('discrete math') || content.includes('dicrete math')) background.push('Discrete Mathematics');
+        if (content.includes('calculus') || content.includes('calculate')) background.push('Calculus');
+        if (content.includes('statistics') || content.includes('stats')) background.push('Statistics');
       }
-    }
+    });
 
-    // 从additional_info中提取背景信息
-    const background: string[] = ['General Background'];
-    const experience: string[] = ['Academic Background'];
-    
-    if (extractedData.additional_info) {
-      const info = extractedData.additional_info.toLowerCase();
-      if (info.includes('gre')) background.push('GRE Prepared');
-      if (info.includes('research')) experience.push('Research');
-      if (info.includes('internship') || info.includes('work')) experience.push('Work Experience');
-      if (info.includes('project')) experience.push('Projects');
-    }
-
-    return {
+    const profile = {
       name: 'User',
       gpa: gpa,
       toefl: toefl,
       ielts: ielts,
-      background: [...new Set(background)],
+      background: background.length > 0 ? [...new Set(background)] : ['General Background'], // 去重
       degree: 'Bachelor\'s Degree',
-      experience: [...new Set(experience)]
+      experience: experience.length > 0 ? [...new Set(experience)] : ['Academic Background'] // 去重
     };
+
+    console.log('🎯 最终提取的用户档案:', profile);
+    return profile;
   };
 
   // Handle adding/removing school to/from plan
@@ -365,15 +401,8 @@ function App() {
         // Use new intelligent chat API
         const chatResponse = await intelligentChat(updatedMessages);
         
-        // If enough information is available, start analysis or re-analysis
+        // If enough information is available, start analysis
         if (chatResponse.shouldAnalyze) {
-          // If this is a re-analysis, clear previous data
-          if (chatResponse.shouldReanalyze) {
-            setAnalysisId(null);
-            setSchoolsData(null);
-            setTimelineData(null);
-          }
-          
           setIsAnalyzing(true);
           setAnalysisProgress('analyzing');
           
@@ -398,9 +427,9 @@ function App() {
             const schools = await getSchools(analysisResponse.analysis_id);
             console.log('✅ 学校匹配完成', new Date().toLocaleTimeString());
             
-            // 从API提取的数据创建用户档案
+            // 从聊天消息中提取用户信息用于资格评估
             try {
-              const extractedProfile = createUserProfileFromExtracted(chatResponse.extractedProfile);
+              const extractedProfile = extractUserProfileFromMessages();
               setUserProfile(extractedProfile);
               console.log('✅ 用户资料提取成功:', extractedProfile);
             } catch (error) {
@@ -437,18 +466,14 @@ function App() {
             setAnalysisProgress('complete');
 
             // Send completion message
-            const completionMessage = chatResponse.shouldReanalyze 
-              ? `Re-analysis complete! I've updated your recommendations based on your new information. Check out the updated results! 🎉`
-              : `Analysis complete! You can now view your personalized recommendations in the Safe Programs, Target Programs and Dream Programs tabs. 🎉`;
-              
             setMessages(prev => [...prev, {
               role: 'assistant',
-              content: completionMessage
+              content: `Analysis complete! You can now view your analysis results in the Target Schools and Reach Schools tabs.`
             }]);
 
-            // Auto-navigate to results page
+            // Auto-navigate to results page but keep chat open
             setTimeout(() => {
-              setActiveTab('safe');
+              setActiveTab('target');
             }, 2000);
 
           } catch (error) {
@@ -589,7 +614,7 @@ function App() {
             </button>
           </div>
           
-          <main className="flex-1 px-8 pb-8 overflow-y-auto scrollbar-hide">
+          <main className="flex-1 px-8 pb-8 overflow-y-auto">
             {renderContent()}
           </main>
         </div>

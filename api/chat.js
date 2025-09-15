@@ -16,7 +16,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid messages' });
     }
 
-    // 简化的信息提取JSON Schema
+    // 定义信息提取的JSON Schema
     const extractionSchema = {
       type: "object",
       properties: {
@@ -39,68 +39,100 @@ export default async function handler(req, res) {
         },
         language_test: {
           type: "string",
-          description: "TOEFL/IELTS score or status (e.g., 'TOEFL 100', 'IELTS 7.5', or empty string if not mentioned)"
+          description: "TOEFL/IELTS score or status (e.g., 'TOEFL 100', 'IELTS 7.5', 'planning to take', or empty string if not mentioned)"
         },
         additional_info: {
           type: "string",
-          description: "Any other relevant information (GRE/GMAT/LSAT scores, work experience, projects, etc.)"
+          description: "Any other information provided by user"
         },
         has_sufficient_info: {
           type: "boolean",
-          description: "Whether there is enough information to provide school recommendations (at least major, target field, and GPA)"
-        },
-        needs_specialized_questions: {
-          type: "boolean",
-          description: "Always set to false - we skip specialized questions"
-        },
-        is_responding_to_specialized: {
-          type: "boolean",
-          description: "Always set to false"
-        },
-        ready_to_analyze: {
-          type: "boolean", 
-          description: "Set to true if has_sufficient_info is true"
-        },
-        should_reanalyze: {
-          type: "boolean",
-          description: "Whether new information was provided that would change previous recommendations"
+          description: "Whether all 5 core pieces of information are provided (major, target field, GPA, countries, language)"
         },
         missing_info: {
           type: "array",
-          items: { type: "string" },
-          description: "List of important missing information that would improve recommendations"
+          items: { 
+            type: "string",
+            enum: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test"]
+          },
+          description: "Array of missing field names from: current_major, target_field, gpa_score, preferred_countries, language_test"
+        },
+        needs_specialized_questions: {
+          type: "boolean",
+          description: "Whether specialized questions for the target field should be asked (only true if basic info is complete and no specialized info has been provided yet)"
+        },
+        specialized_field: {
+          type: "string",
+          description: "The specific field for specialized questions (cs, business, engineering, medicine, etc.)"
+        },
+        specialized_answers: {
+          type: "object",
+          description: "Answers to field-specific questions",
+          properties: {
+            test_score: { type: "string", description: "GRE/GMAT/MCAT/LSAT score" },
+            specialization: { type: "string", description: "Specific area of interest within the field" },
+            experience: { type: "string", description: "Relevant experience or projects" },
+            coursework: { type: "string", description: "Relevant courses or academic preparation" },
+            skills: { type: "string", description: "Technical skills or tools" }
+          }
+        },
+        is_responding_to_specialized: {
+          type: "boolean", 
+          description: "Whether user is responding to specialized questions (any response after specialized questions were asked)"
+        },
+        ready_to_analyze: {
+          type: "boolean",
+          description: "Whether user wants to proceed with analysis (said 'analyze', 'start', 'go', etc.)"
         }
       },
-      required: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test", "additional_info", "has_sufficient_info", "needs_specialized_questions", "is_responding_to_specialized", "ready_to_analyze", "should_reanalyze", "missing_info"]
+      required: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test", "has_sufficient_info", "missing_info", "needs_specialized_questions", "is_responding_to_specialized", "ready_to_analyze"]
     };
 
-    // 智能信息提取提示词
-    const systemPrompt = `You are EduPath AI assistant. Extract and update user information from conversation.
+    // 构建提示词
+    const systemPrompt = `You are EduPath AI assistant. Extract information from user conversation and determine analysis readiness.
 
-EXTRACT INFORMATION:
-1. Current major/background → current_major
-2. Target graduate program → target_field  
-3. GPA/grades → gpa_score
-4. Countries of interest → preferred_countries
-5. Language test scores (TOEFL/IELTS) → language_test
-6. Additional info (GRE/GMAT/LSAT, work experience, projects, research) → additional_info
+BASIC REQUIRED INFORMATION (must have all 5):
+1. Current major/background (field: current_major)
+2. Target graduate program field (field: target_field)  
+3. GPA or average grade (field: gpa_score)
+4. Preferred countries/regions (field: preferred_countries)
+5. Language test status (field: language_test)
 
-DECISION LOGIC:
-- Set has_sufficient_info = true if you have at least: current_major, target_field, and gpa_score
-- Set should_start_analysis = true if basic info is complete and user hasn't been analyzed yet
-- Set should_reanalyze = true if user provided significant NEW information after previous analysis
-- Set needs_specialized_questions = false (we skip specialized questions)
-- Set is_responding_to_specialized = false
-- Set ready_to_analyze = true if has_sufficient_info is true
+SPECIALIZED QUESTIONS (optional, field-specific):
+- Computer Science: GRE score, programming languages, CS specialization, projects, math courses
+- Business: GMAT/GRE score, work experience, career goals, leadership experience, business courses
+- Engineering: GRE score, engineering branch, math/physics courses, lab experience, software tools
+- Medicine: MCAT score, clinical experience, research experience, pre-med courses, medical specialization
+- Sciences: GRE score, science specialization, research experience, lab skills, math background
+- Public Health: GRE score, statistics courses, field experience, PH specialization, undergraduate background
+- Arts & Humanities: GRE score, portfolio/writing samples, languages, specialization, research experience
+- Social Sciences: GRE score, research methods, fieldwork experience, specialization, quantitative skills
+- Education: GRE score, teaching experience, education specialization, age group preference, education courses
+- Law: LSAT score, legal experience, law specialization, writing experience, undergraduate background
 
-EXAMPLES:
-- User: "1. economics 2. mba 3. 3.9 4. 103 5. us" → has_sufficient_info: true, should_start_analysis: true
-- User: "I also have GMAT 720" (after analysis) → should_reanalyze: true
-- User: "My work experience is 3 years in consulting" → should_reanalyze: true
+LOGIC:
+- Set has_sufficient_info = true only if ALL 5 basic pieces are provided
+- Set needs_specialized_questions = true if: basic info is complete AND target field matches any major field (cs, business, engineering, medicine, sciences, public_health, arts, social_sciences, education, law) AND no specialized questions have been asked yet
+- Set specialized_field to the detected field, mapping user input to standard fields:
+  * "computer science", "cs", "software engineering", "data science" → "cs"
+  * "business", "mba", "business administration", "management" → "business"  
+  * "engineering", "mechanical engineering", "electrical engineering", etc. → "engineering"
+  * "medicine", "medical", "pre-med", "healthcare" → "medicine"
+  * "biology", "chemistry", "physics", "mathematics" → "sciences"
+  * "public health", "epidemiology", "health policy" → "public_health"
+  * "literature", "history", "philosophy", "art" → "arts"
+  * "psychology", "sociology", "political science" → "social_sciences"
+  * "education", "teaching", "pedagogy" → "education"
+  * "law", "legal studies", "jurisprudence" → "law"
+- Extract any specialized answers provided in specialized_answers object
+- Set is_responding_to_specialized = true if user is responding after specialized questions were shown (any message that provides specialized info or says they want to skip/proceed)
+- Set ready_to_analyze = true ONLY if: (user explicitly wants to start analysis AND has answered at least one specialized question) OR user says they want to skip specialized questions
 
-Always extract ALL information from conversation history, not just the latest message.
+IMPORTANT: 
+- Use empty string "" for missing information
+- For missing_info array, use exact field names: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test"]
 
-Return JSON format with all required fields.`;
+Please extract information and return in JSON format.`;
 
     // 调用OpenAI进行信息提取
     const completion = await openai.chat.completions.create({
@@ -247,25 +279,55 @@ I need these details to recommend the best schools for you:
 The more detailed your information, the more precise my recommendations will be 🎯
 
 Please share all this information at once!`;
-    } else if (extractedData.has_sufficient_info) {
-      // 有足够信息，直接开始分析或重新分析
-      if (extractedData.should_reanalyze) {
-        aiReply = `Great! I've updated your profile with the new information. Let me re-analyze and find better matches for you... 🔄`;
+    } else if (extractedData.has_sufficient_info && extractedData.needs_specialized_questions) {
+      // 基础信息完整，触发专业特定问题
+      const specializedQuestions = getSpecializedQuestions(extractedData.specialized_field);
+      
+      if (specializedQuestions) {
+        const questionsList = specializedQuestions.questions
+          .map((q, i) => `${i + 1}. ${q}`)
+          .join('\n');
+          
+        aiReply = `Excellent! I have your basic information.
+
+I'd love to know a bit more about your ${extractedData.target_field} background:
+
+🎯 ${specializedQuestions.title} (optional):
+${questionsList}
+
+You can answer as many or as few as you'd like.
+If you provide additional details later, I can always update your analysis for better matches! 🚀`;
       } else {
-        // 显示当前信息并开始分析
-        let profileSummary = `Perfect! I have your information:\n\n`;
-        if (extractedData.current_major) profileSummary += `• Academic Background: ${extractedData.current_major}\n`;
-        if (extractedData.target_field) profileSummary += `• Target Program: ${extractedData.target_field}\n`;
-        if (extractedData.gpa_score) profileSummary += `• GPA: ${extractedData.gpa_score}\n`;
-        if (extractedData.language_test) profileSummary += `• Language Score: ${extractedData.language_test}\n`;
-        if (extractedData.preferred_countries && extractedData.preferred_countries.length > 0) {
-          profileSummary += `• Preferred Countries: ${extractedData.preferred_countries.join(', ')}\n`;
-        }
-        if (extractedData.additional_info) profileSummary += `• Additional Info: ${extractedData.additional_info}\n`;
-        
-        profileSummary += `\nStarting analysis now... 🔄`;
-        aiReply = profileSummary;
+        aiReply = `Perfect! I have all the essential information. Starting analysis now... 🔄`;
       }
+    } else if (extractedData.has_sufficient_info && extractedData.ready_to_analyze && extractedData.is_responding_to_specialized) {
+      // 用户明确要求分析且已回答专业问题
+      aiReply = `Perfect! Starting analysis... 🔄`;
+    } else if (extractedData.has_sufficient_info && extractedData.is_responding_to_specialized && !extractedData.ready_to_analyze) {
+      // 用户回答了专业问题但没有明确要求分析
+      aiReply = `Excellent! Thank you for providing those additional details about your ${extractedData.target_field} background.
+
+I now have a comprehensive understanding of your profile:
+• Academic Background: ${extractedData.current_major}
+• Target Program: ${extractedData.target_field}
+• GPA: ${extractedData.gpa_score}
+• Language Score: ${extractedData.language_test}
+• Preferred Countries: ${extractedData.preferred_countries?.join(', ')}
+
+With this information, I can provide you with highly personalized school recommendations and create a detailed application timeline.
+
+When you're ready to see your analysis results, just say "start analysis" or "analyze"! 🚀`;
+    } else if (extractedData.has_sufficient_info && !extractedData.needs_specialized_questions && !extractedData.ready_to_analyze) {
+      // 用户提供了基本信息，但专业不需要特殊问题，且没有明确要求分析
+      aiReply = `Perfect! I have all the essential information I need:
+
+• Academic Background: ${extractedData.current_major}
+• Target Program: ${extractedData.target_field}
+• GPA: ${extractedData.gpa_score}
+• Language Score: ${extractedData.language_test}
+• Preferred Countries: ${extractedData.preferred_countries?.join(', ')}
+
+Starting analysis now... 🔄`;
     } else {
       // 构建已获得信息的确认
       let confirmation = "";
@@ -326,8 +388,10 @@ Please share all this information at once!`;
       reply: aiReply,
       extractedProfile: extractedData,
       hasBasicInfo: extractedData.has_sufficient_info,
-      shouldAnalyze: extractedData.has_sufficient_info,
-      shouldReanalyze: extractedData.should_reanalyze || false
+      shouldAnalyze: extractedData.has_sufficient_info && (
+        (extractedData.ready_to_analyze && extractedData.is_responding_to_specialized) || 
+        !extractedData.needs_specialized_questions
+      )
     });
 
   } catch (error) {
