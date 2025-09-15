@@ -118,9 +118,9 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
       <div className="grid grid-cols-12 gap-6">
         
         {/* Left Column - School Identity & Score */}
-        <div className="col-span-3 flex flex-col items-center text-center">
+        <div className="col-span-3 flex flex-col items-center text-center justify-center h-full py-4">
           {/* School Logo */}
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-6 ${
             type === 'target' 
               ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
               : 'bg-gradient-to-r from-orange-500 to-red-600'
@@ -131,18 +131,18 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
           </div>
 
           {/* School Name */}
-          <h3 className="text-white font-semibold text-lg mb-1 leading-tight">
+          <h3 className="text-white font-semibold text-lg mb-3 leading-relaxed">
             {school.school}
           </h3>
 
           {/* Full Program Name */}
-          <p className="text-gray-300 text-base font-medium mb-4 leading-tight">
+          <p className="text-gray-300 text-base font-medium mb-8 leading-relaxed">
             {getFullProgramName(school.program)}
           </p>
 
           {/* Compatibility Score - Enlarged */}
           <div className="flex flex-col items-center">
-            <div className="relative w-20 h-20 mb-3">
+            <div className="relative w-20 h-20 mb-4">
               {/* Background circle */}
               <div className="absolute inset-0 rounded-full bg-slate-700"></div>
               {/* Progress circle */}
@@ -166,7 +166,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
         {/* Middle Column - Program Details */}
         <div className="col-span-3">
           <div className="bg-slate-800/50 rounded-lg p-4 h-full">
-            <h4 className="text-white text-sm font-semibold mb-4 border-b border-slate-600 pb-2">
+            <h4 className="text-slate-200 text-base font-bold mb-4 border-b border-slate-600 pb-2">
               Program Details
             </h4>
             
@@ -209,7 +209,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
         {/* Right Column - Admission Requirements */}
         <div className="col-span-3">
           <div className="bg-slate-800/50 rounded-lg p-4 h-full">
-            <h4 className="text-white text-sm font-semibold mb-4 border-b border-slate-600 pb-2">
+            <h4 className="text-slate-200 text-base font-bold mb-4 border-b border-slate-600 pb-2">
               Admission Requirements
             </h4>
             
@@ -255,7 +255,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
         {/* Far Right Column - Qualification Status */}
         <div className="col-span-3">
           <div className="bg-slate-800/50 rounded-lg p-4 h-full">
-            <h4 className="text-white text-sm font-semibold mb-4 border-b border-slate-600 pb-2">
+            <h4 className="text-slate-200 text-base font-bold mb-4 border-b border-slate-600 pb-2">
               Qualification Status
             </h4>
             
