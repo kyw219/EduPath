@@ -202,47 +202,97 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
             </h4>
             
             <div className="space-y-3">
-              <div>
-                <label className="text-slate-400 text-xs font-medium">GPA</label>
-                <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
-                  <span className="text-slate-300 text-sm">{school.gpa_requirement}</span>
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <label className="text-slate-400 text-xs font-medium">GPA</label>
+                  <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
+                    <span className="text-slate-300 text-sm">{school.gpa_requirement}</span>
+                  </div>
+                </div>
+                <div className="w-6 flex justify-center items-center mt-6">
+                  <div className={`w-6 h-6 rounded-full ${
+                    school.qualification_status?.gpa?.status === 'met' ? 'bg-green-500' :
+                    school.qualification_status?.gpa?.status === 'partial' ? 'bg-yellow-500' :
+                    school.qualification_status?.gpa?.status === 'not_met' ? 'bg-red-500' :
+                    'bg-gray-500'
+                  }`}></div>
                 </div>
               </div>
 
-              <div>
-                <label className="text-slate-400 text-xs font-medium">Language Score</label>
-                <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
-                  <span className="text-slate-300 text-sm">{school.language_requirement}</span>
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <label className="text-slate-400 text-xs font-medium">Language Score</label>
+                  <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
+                    <span className="text-slate-300 text-sm">{school.language_requirement}</span>
+                  </div>
+                </div>
+                <div className="w-6 flex justify-center items-center mt-6">
+                  <div className={`w-6 h-6 rounded-full ${
+                    school.qualification_status?.language?.status === 'met' ? 'bg-green-500' :
+                    school.qualification_status?.language?.status === 'partial' ? 'bg-yellow-500' :
+                    school.qualification_status?.language?.status === 'not_met' ? 'bg-red-500' :
+                    'bg-gray-500'
+                  }`}></div>
                 </div>
               </div>
 
-              <div>
-                <label className="text-slate-400 text-xs font-medium">Prerequisites</label>
-                <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
-                  <span className="text-slate-300 text-sm">{school.prerequisite_courses}</span>
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <label className="text-slate-400 text-xs font-medium">Prerequisites</label>
+                  <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
+                    <span className="text-slate-300 text-sm">{school.prerequisite_courses}</span>
+                  </div>
+                </div>
+                <div className="w-6 flex justify-center items-center mt-6">
+                  <div className={`w-6 h-6 rounded-full ${
+                    school.qualification_status?.prerequisites?.status === 'met' ? 'bg-green-500' :
+                    school.qualification_status?.prerequisites?.status === 'partial' ? 'bg-yellow-500' :
+                    school.qualification_status?.prerequisites?.status === 'not_met' ? 'bg-red-500' :
+                    'bg-gray-500'
+                  }`}></div>
                 </div>
               </div>
 
-              <div>
-                <label className="text-slate-400 text-xs font-medium">Degree Requirement</label>
-                <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
-                  <span className="text-slate-300 text-sm">{school.degree_requirement}</span>
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <label className="text-slate-400 text-xs font-medium">Degree Requirement</label>
+                  <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
+                    <span className="text-slate-300 text-sm">{school.degree_requirement}</span>
+                  </div>
+                </div>
+                <div className="w-6 flex justify-center items-center mt-6">
+                  <div className={`w-6 h-6 rounded-full ${
+                    school.qualification_status?.degree?.status === 'met' ? 'bg-green-500' :
+                    school.qualification_status?.degree?.status === 'partial' ? 'bg-yellow-500' :
+                    school.qualification_status?.degree?.status === 'not_met' ? 'bg-red-500' :
+                    'bg-gray-500'
+                  }`}></div>
                 </div>
               </div>
 
-              <div>
-                <label className="text-slate-400 text-xs font-medium">Other Requirements</label>
-                <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
-                  <span className="text-slate-300 text-sm">{school.other_requirements}</span>
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <label className="text-slate-400 text-xs font-medium">Other Requirements</label>
+                  <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
+                    <span className="text-slate-300 text-sm">{school.other_requirements}</span>
+                  </div>
+                </div>
+                <div className="w-6 flex justify-center items-center mt-6">
+                  <div className={`w-6 h-6 rounded-full ${
+                    school.qualification_status?.other?.status === 'met' ? 'bg-green-500' :
+                    school.qualification_status?.other?.status === 'partial' ? 'bg-yellow-500' :
+                    school.qualification_status?.other?.status === 'not_met' ? 'bg-red-500' :
+                    'bg-gray-500'
+                  }`}></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Far Right Column - Qualification Status */}
+        {/* Far Right Column - Qualification Status (Now integrated into Admission Requirements) */}
         <div className="col-span-3">
-          <QualificationStatus school={school} userProfile={userProfile} />
+          {/* Qualification Status is now shown as dots in the Admission Requirements column */}
         </div>
 
       </div>
