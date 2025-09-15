@@ -140,9 +140,9 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
             {getFullProgramName(school.program)}
           </p>
 
-          {/* Compatibility Score */}
+          {/* Compatibility Score - Enlarged */}
           <div className="flex flex-col items-start">
-            <div className="relative w-16 h-16 mb-2">
+            <div className="relative w-20 h-20 mb-3">
               {/* Background circle */}
               <div className="absolute inset-0 rounded-full bg-slate-700"></div>
               {/* Progress circle */}
@@ -154,18 +154,18 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
               ></div>
               {/* Inner circle with score */}
               <div className="absolute inset-2 bg-slate-800 rounded-full flex items-center justify-center">
-                <span className={`font-bold text-lg ${getScoreColor(school.match_score)}`}>
+                <span className={`font-bold text-xl ${getScoreColor(school.match_score)}`}>
                   {school.match_score}
                 </span>
               </div>
             </div>
-            <p className="text-slate-400 text-sm">Compatibility Score</p>
+            <p className="text-slate-400 text-sm font-medium">Compatibility Score</p>
           </div>
         </div>
 
         {/* Middle Column - Program Details */}
         <div className="col-span-3">
-          <div className="border-2 border-red-500/30 rounded-lg p-4 h-full">
+          <div className="bg-slate-800/50 rounded-lg p-4 h-full">
             <h4 className="text-white text-sm font-semibold mb-4 border-b border-slate-600 pb-2">
               Program Details
             </h4>
@@ -208,7 +208,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
 
         {/* Right Column - Admission Requirements */}
         <div className="col-span-3">
-          <div className="border-2 border-red-500/30 rounded-lg p-4 h-full">
+          <div className="bg-slate-800/50 rounded-lg p-4 h-full">
             <h4 className="text-white text-sm font-semibold mb-4 border-b border-slate-600 pb-2">
               Admission Requirements
             </h4>
@@ -254,19 +254,20 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
 
         {/* Far Right Column - Qualification Status */}
         <div className="col-span-3">
-          <div className="border-2 border-red-500/30 rounded-lg p-4 h-full">
+          <div className="bg-slate-800/50 rounded-lg p-4 h-full">
             <h4 className="text-white text-sm font-semibold mb-4 border-b border-slate-600 pb-2">
               Qualification Status
             </h4>
             
             <div className="space-y-3">
               {qualificationData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-slate-400 text-xs font-medium">{item.name}</p>
-                  </div>
-                  <div className="ml-3 flex-shrink-0">
-                    {getQualificationIndicator(item.status)}
+                <div key={index}>
+                  <label className="text-slate-400 text-xs font-medium">{item.name}</label>
+                  <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600 flex items-center justify-between">
+                    <span className="text-slate-300 text-sm">{item.requiredValue}</span>
+                    <div className="ml-3 flex-shrink-0">
+                      {getQualificationIndicator(item.status)}
+                    </div>
                   </div>
                 </div>
               ))}
