@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { School } from '../types';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SchoolCardProps {
   school: School;
@@ -15,7 +14,6 @@ interface QualificationItem {
 }
 
 const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
-  const [showQualifications, setShowQualifications] = useState(false);
 
   // Generate school abbreviation
   const getSchoolAbbreviation = (schoolName: string) => {
@@ -69,31 +67,29 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
     return 'not_met'; // 默认需要满足
   };
 
-  // 基于真实数据生成 qualification data
+  // 简化的 qualification data - 只显示标题和状态
   const qualificationData: QualificationItem[] = [
     {
-      name: 'English Proficiency',
-      status: calculateStatus(school.language_requirements),
-      userValue: 'TOEFL 105', // 这个应该来自用户档案
-      requiredValue: school.language_requirements
+      name: '语言成绩',
+      status: calculateStatus(school.language_requirement),
+      requiredValue: school.language_requirement
     },
     {
-      name: 'Academic Prerequisites',
-      status: calculateStatus(school.admission_requirements),
-      userValue: 'GPA 3.2', // 这个应该来自用户档案
-      requiredValue: school.admission_requirements
+      name: '先修课要求',
+      status: calculateStatus(school.prerequisite_courses),
+      requiredValue: school.prerequisite_courses
     },
     {
-      name: 'Prerequisites',
-      status: calculateStatus(school.prerequisites || 'Not specified'),
-      requiredValue: school.prerequisites || 'Not specified'
+      name: '学位要求',
+      status: calculateStatus(school.degree_requirement),
+      requiredValue: school.degree_requirement
     },
     {
-      name: 'Other Requirements',
-      status: calculateStatus(school.other_requirements || 'Not specified'),
-      requiredValue: school.other_requirements || 'Not specified'
+      name: '其他要求',
+      status: calculateStatus(school.other_requirements),
+      requiredValue: school.other_requirements
     }
-  ].filter(item => item.requiredValue !== 'Not specified'); // 过滤掉空值
+  ];
 
   // Get qualification status indicator
   const getQualificationIndicator = (status: QualificationItem['status']) => {
@@ -219,40 +215,37 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
             
             <div className="space-y-3">
               <div>
-                <label className="text-slate-400 text-xs font-medium">English Proficiency</label>
+                <label className="text-slate-400 text-xs font-medium">GPA</label>
                 <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
-                  <span className="text-slate-300 text-sm">
-                    {school.language_requirements || "TOEFL 90+ or IELTS 7.0+"}
-                  </span>
+                  <span className="text-slate-300 text-sm">{school.gpa_requirement}</span>
                 </div>
               </div>
 
               <div>
-                <label className="text-slate-400 text-xs font-medium">Academic Prerequisites</label>
+                <label className="text-slate-400 text-xs font-medium">语言成绩</label>
                 <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
-                  <span className="text-slate-300 text-sm">
-                    {school.admission_requirements || "Bachelor's degree, 3.0+ GPA recommended"}
-                  </span>
+                  <span className="text-slate-300 text-sm">{school.language_requirement}</span>
                 </div>
               </div>
 
-              {school.prerequisites && school.prerequisites !== 'Not specified' && (
-                <div>
-                  <label className="text-slate-400 text-xs font-medium">Prerequisites</label>
-                  <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
-                    <span className="text-slate-300 text-sm">
-                      {school.prerequisites}
-                    </span>
-                  </div>
+              <div>
+                <label className="text-slate-400 text-xs font-medium">先修课要求</label>
+                <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
+                  <span className="text-slate-300 text-sm">{school.prerequisite_courses}</span>
                 </div>
-              )}
+              </div>
 
               <div>
-                <label className="text-slate-400 text-xs font-medium">Other Requirements</label>
+                <label className="text-slate-400 text-xs font-medium">学位要求</label>
                 <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
-                  <span className="text-slate-300 text-sm">
-                    {school.other_requirements || (type === 'reach' && school.suggestions ? school.suggestions : "Research experience preferred")}
-                  </span>
+                  <span className="text-slate-300 text-sm">{school.degree_requirement}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-slate-400 text-xs font-medium">其他要求</label>
+                <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600">
+                  <span className="text-slate-300 text-sm">{school.other_requirements}</span>
                 </div>
               </div>
             </div>
@@ -262,47 +255,21 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
         {/* Far Right Column - Qualification Status */}
         <div className="col-span-3">
           <div className="border-2 border-red-500/30 rounded-lg p-4 h-full">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-600 pb-2">
-              <h4 className="text-white text-sm font-semibold">
-                Qualification Status
-              </h4>
-              <button
-                onClick={() => setShowQualifications(!showQualifications)}
-                className="text-slate-400 hover:text-white transition-colors"
-              >
-                {showQualifications ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
-            </div>
+            <h4 className="text-white text-sm font-semibold mb-4 border-b border-slate-600 pb-2">
+              Qualification Status
+            </h4>
             
             <div className="space-y-3">
-              {qualificationData.slice(0, showQualifications ? qualificationData.length : 3).map((item, index) => (
+              {qualificationData.map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <p className="text-slate-400 text-xs font-medium">{item.name}</p>
-                    <p className="text-slate-300 text-xs truncate">
-                      {item.userValue ? `${item.userValue} / ${item.requiredValue}` : item.requiredValue}
-                    </p>
                   </div>
                   <div className="ml-3 flex-shrink-0">
                     {getQualificationIndicator(item.status)}
                   </div>
                 </div>
               ))}
-              
-              {!showQualifications && qualificationData.length > 3 && (
-                <div className="text-center">
-                  <button
-                    onClick={() => setShowQualifications(true)}
-                    className="text-blue-400 hover:text-blue-300 text-xs transition-colors"
-                  >
-                    +{qualificationData.length - 3} more
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>

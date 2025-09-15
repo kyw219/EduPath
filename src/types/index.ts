@@ -11,10 +11,11 @@ export interface School {
   deadline: string;
   tuition: string;
   duration: string;
-  language_requirements: string;
-  admission_requirements: string;
-  prerequisites?: string;
-  other_requirements?: string;
+  gpa_requirement: string;
+  language_requirement: string;
+  prerequisite_courses: string;
+  degree_requirement: string;
+  other_requirements: string;
   gaps?: string[];
   suggestions?: string;
 }

@@ -66,16 +66,17 @@ ADDITIONAL CONTEXT:
 Based on ALL the above information, extract and return a JSON object with exactly these fields:
 {
   "tuition": "extracted/estimated tuition amount in USD format",
-  "language_requirements": "complete language requirements with specific scores",
-  "admission_requirements": "comprehensive admission requirements including GPA, degree, academic background, language scores, and any additional requirements",
-  "prerequisites": "prerequisite courses or background needed",
-  "other_requirements": "work experience, portfolio, tests, or other special requirements"
+  "gpa_requirement": "GPA requirement (e.g., '3.0+ GPA required' or 'No specific GPA requirement')",
+  "language_requirement": "Language test scores (e.g., 'TOEFL 90+ or IELTS 7.0+')",
+  "prerequisite_courses": "Required courses or academic background (e.g., 'Calculus I-III, Linear Algebra, Statistics')",
+  "degree_requirement": "Required degree background (e.g., 'Bachelor in Engineering or related field')",
+  "other_requirements": "Work experience, research experience, or other requirements"
 }
 
 IMPORTANT: 
-- For admission_requirements, include ALL requirements in one comprehensive field: language scores, GPA, degree, academic prerequisites, etc.
-- Be specific and detailed, extract exact numbers and requirements from the program details
-- Don't just summarize - include the complete information available`
+- Extract specific requirements for each category
+- If no specific requirement exists, use 'No specific requirement' or 'Not specified'
+- Be precise with numbers and scores`
       }],
       response_format: { type: "json_object" }, // 强制 JSON 输出
       max_tokens: 600,
@@ -94,7 +95,7 @@ IMPORTANT:
     console.log(`✅ 结构化成功: ${schoolData.school_name}`);
     
     // 验证必需字段
-    const requiredFields = ['tuition', 'language_requirements', 'admission_requirements'];
+    const requiredFields = ['tuition', 'gpa_requirement', 'language_requirement', 'prerequisite_courses', 'degree_requirement', 'other_requirements'];
     for (const field of requiredFields) {
       if (!structuredData[field]) {
         console.log(`⚠️ 缺少字段 ${field}，使用默认值`);
@@ -112,9 +113,10 @@ IMPORTANT:
     console.log('⚠️ 使用默认值 - 这可能导致学校信息重复');
     return {
       tuition: "$50,000",
-      language_requirements: "TOEFL 90+ or IELTS 7.0+",
-      admission_requirements: "Bachelor's degree, 3.0+ GPA recommended",
-      prerequisites: "Relevant undergraduate coursework",
+      gpa_requirement: "3.0+ GPA recommended",
+      language_requirement: "TOEFL 90+ or IELTS 7.0+",
+      prerequisite_courses: "Relevant undergraduate coursework",
+      degree_requirement: "Bachelor's degree required",
       other_requirements: "Strong academic background"
     };
   }
@@ -124,9 +126,10 @@ IMPORTANT:
 function getDefaultValue(field) {
   const defaults = {
     tuition: "$50,000",
-    language_requirements: "TOEFL 90+ or IELTS 7.0+",
-    admission_requirements: "Bachelor's degree, 3.0+ GPA recommended",
-    prerequisites: "Relevant undergraduate coursework",
+    gpa_requirement: "3.0+ GPA recommended",
+    language_requirement: "TOEFL 90+ or IELTS 7.0+",
+    prerequisite_courses: "Relevant undergraduate coursework",
+    degree_requirement: "Bachelor's degree required",
     other_requirements: "Strong academic background"
   };
   return defaults[field] || "Not specified";
@@ -221,12 +224,13 @@ export default async function handler(req, res) {
           program: row.program_name,
           match_score: Math.round((1 - row.similarity) * 100),
           ranking: row.qs_ranking,
-          deadline: "2025-01-15", // 这个可以后续也从数据中提取
+          deadline: "2025-01-15",
           tuition: structuredData.tuition,
           duration: row.duration || "2 years",
-          language_requirements: structuredData.language_requirements,
-          admission_requirements: structuredData.admission_requirements,
-          prerequisites: structuredData.prerequisites,
+          gpa_requirement: structuredData.gpa_requirement,
+          language_requirement: structuredData.language_requirement,
+          prerequisite_courses: structuredData.prerequisite_courses,
+          degree_requirement: structuredData.degree_requirement,
           other_requirements: structuredData.other_requirements
         };
       }));
@@ -262,14 +266,15 @@ export default async function handler(req, res) {
           program: row.program_name,
           match_score: Math.max(50, Math.round((1 - row.similarity) * 100) - 20),
           ranking: row.qs_ranking,
-          gaps: ["Advanced Math", "Research Experience"], // 这个可以后续也用 LLM 生成
+          gaps: ["Advanced Math", "Research Experience"],
           suggestions: "Complete prerequisite courses and gain research experience",
           deadline: "2025-12-01",
           tuition: structuredData.tuition,
-          duration: row.duration || "2 years", 
-          language_requirements: structuredData.language_requirements,
-          admission_requirements: structuredData.admission_requirements,
-          prerequisites: structuredData.prerequisites,
+          duration: row.duration || "2 years",
+          gpa_requirement: structuredData.gpa_requirement,
+          language_requirement: structuredData.language_requirement,
+          prerequisite_courses: structuredData.prerequisite_courses,
+          degree_requirement: structuredData.degree_requirement,
           other_requirements: structuredData.other_requirements
         };
       }));
