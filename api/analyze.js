@@ -32,8 +32,23 @@ export default async function handler(req, res) {
     // 生成 session_id
     const sessionId = uuidv4();
 
-    // 构建用户档案，强调目标专业
-    const profileText = `Target field: ${userProfile.target_field}. Background: ${userProfile.current_major}. GPA: ${userProfile.gpa_score}. Countries: ${userProfile.preferred_countries?.join(', ')}. Language: ${userProfile.language_test}. ${userProfile.additional_info || ''}`;
+    // 构建增强用户档案
+    let profileText = `Target field: ${userProfile.target_field}. Background: ${userProfile.current_major}. GPA: ${userProfile.gpa_score}. Countries: ${userProfile.preferred_countries?.join(', ')}. Language: ${userProfile.language_test}.`;
+    
+    // 添加专业特定信息（如果有的话）
+    if (userProfile.specialized_answers) {
+      const spec = userProfile.specialized_answers;
+      if (spec.test_score) profileText += ` Test Score: ${spec.test_score}.`;
+      if (spec.specialization) profileText += ` Specialization: ${spec.specialization}.`;
+      if (spec.experience) profileText += ` Experience: ${spec.experience}.`;
+      if (spec.coursework) profileText += ` Coursework: ${spec.coursework}.`;
+      if (spec.skills) profileText += ` Skills: ${spec.skills}.`;
+    }
+    
+    // 添加其他信息
+    if (userProfile.additional_info) {
+      profileText += ` ${userProfile.additional_info}`;
+    }
 
     console.log('🔄 向量化用户档案...');
     
