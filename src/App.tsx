@@ -6,7 +6,7 @@ import TargetSchools from './components/TargetSchools';
 import ReachSchools from './components/ReachSchools';
 import Timeline from './components/Timeline';
 import { ChatMessage, SchoolsResponse, TimelineResponse } from './types';
-import { intelligentChat, analyzeChat, getSchools, getTimeline, adjustSchools } from './api/realApi';
+import { intelligentChat, analyzeChat, getSchools, getTimeline } from './api/realApi';
 
 function App() {
   const [activeTab, setActiveTab] = useState('target');
@@ -18,46 +18,82 @@ function App() {
   const [showChat, setShowChat] = useState(true);
   const [schoolsInPlan, setSchoolsInPlan] = useState<Set<string>>(new Set());
 
-  // Handle adding school to plan
-  const handleAddToPlan = (school: any) => {
+  // Handle adding/removing school to/from plan
+  const handleTogglePlan = (school: any) => {
     const schoolId = `${school.school}-${school.program}`;
     
     if (schoolsInPlan.has(schoolId)) {
-      return; // Already in plan
-    }
+      // Remove from plan
+      setSchoolsInPlan(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(schoolId);
+        return newSet;
+      });
 
-    // Add school to plan
-    setSchoolsInPlan(prev => new Set([...prev, schoolId]));
-
-    // Generate timeline tasks for this school
-    const newTasks = generateSchoolTasks(school);
-    
-    // Update timeline data
-    if (timelineData) {
-      const updatedTimeline = { ...timelineData };
-      
-      // Add tasks to appropriate phases
-      newTasks.forEach(task => {
-        const phaseIndex = updatedTimeline.timeline.findIndex(phase => 
-          phase.phase.toLowerCase().includes(task.phase.toLowerCase())
+      // Remove corresponding timeline tasks
+      if (timelineData) {
+        const updatedTimeline = { ...timelineData };
+        const schoolName = school.school;
+        
+        // Remove tasks related to this school
+        updatedTimeline.timeline.forEach(phase => {
+          phase.tasks = phase.tasks.filter(task => 
+            !task.task.includes(schoolName)
+          );
+        });
+        
+        // Recalculate total tasks
+        updatedTimeline.total_tasks = updatedTimeline.timeline.reduce(
+          (total, phase) => total + phase.tasks.length, 0
         );
         
-        if (phaseIndex !== -1) {
-          updatedTimeline.timeline[phaseIndex].tasks.push({
-            task: task.task,
-            deadline: task.deadline,
-            status: 'pending',
-            priority: task.priority,
-            reason: task.reason,
-            cost: task.cost
-          });
-        }
-      });
+        setTimelineData(updatedTimeline);
+      }
+    } else {
+      // Add to plan
+      setSchoolsInPlan(prev => new Set([...prev, schoolId]));
+
+      // Generate timeline tasks for this school
+      const newTasks = generateSchoolTasks(school);
       
-      // Update totals
-      updatedTimeline.total_tasks += newTasks.length;
-      
-      setTimelineData(updatedTimeline);
+      // Update timeline data
+      if (timelineData) {
+        const updatedTimeline = { ...timelineData };
+        
+        // Add tasks to appropriate phases
+        newTasks.forEach(task => {
+          let phaseIndex = -1;
+          if (task.phase === "background") {
+            phaseIndex = updatedTimeline.timeline.findIndex(phase => 
+              phase.phase.toLowerCase().includes("background")
+            );
+          } else if (task.phase === "prep") {
+            phaseIndex = updatedTimeline.timeline.findIndex(phase => 
+              phase.phase.toLowerCase().includes("prep")
+            );
+          } else if (task.phase === "season") {
+            phaseIndex = updatedTimeline.timeline.findIndex(phase => 
+              phase.phase.toLowerCase().includes("season")
+            );
+          }
+          
+          if (phaseIndex !== -1) {
+            updatedTimeline.timeline[phaseIndex].tasks.push({
+              task: task.task,
+              deadline: task.deadline,
+              status: 'pending' as const,
+              priority: task.priority as 'high' | 'medium' | 'low',
+              reason: task.reason,
+              cost: task.cost
+            });
+          }
+        });
+        
+        // Update totals
+        updatedTimeline.total_tasks += newTasks.length;
+        
+        setTimelineData(updatedTimeline);
+      }
     }
   };
 
@@ -68,7 +104,7 @@ function App() {
     
     return [
       {
-        phase: "preparation",
+        phase: "background",
         task: `Research ${schoolName} program requirements`,
         deadline: "October 15, 2024",
         priority: "high",
@@ -76,7 +112,7 @@ function App() {
         cost: "Free"
       },
       {
-        phase: "application",
+        phase: "prep",
         task: `Complete ${schoolName} application`,
         deadline: deadline,
         priority: "high",
@@ -84,7 +120,7 @@ function App() {
         cost: "$100"
       },
       {
-        phase: "application",
+        phase: "prep",
         task: `Submit transcripts to ${schoolName}`,
         deadline: deadline,
         priority: "medium",
@@ -92,7 +128,7 @@ function App() {
         cost: "$25"
       },
       {
-        phase: "follow-up",
+        phase: "season",
         task: `Follow up on ${schoolName} application status`,
         deadline: "March 1, 2025",
         priority: "medium",
@@ -108,19 +144,19 @@ function App() {
       const basicTimeline = {
         timeline: [
           {
-            phase: "Preparation Phase",
+            phase: "Background Building",
             period: "September - November 2024",
-            color: "#3B82F6",
+            color: "#EF4444",
             tasks: []
           },
           {
-            phase: "Application Phase", 
+            phase: "Application Prep", 
             period: "December 2024 - January 2025",
             color: "#F59E0B",
             tasks: []
           },
           {
-            phase: "Follow-up Phase",
+            phase: "Application Season",
             period: "February - April 2025",
             color: "#10B981",
             tasks: []
@@ -249,9 +285,9 @@ function App() {
 
     switch (activeTab) {
       case 'target':
-        return <TargetSchools schools={schoolsData.target_schools} onAddToPlan={handleAddToPlan} schoolsInPlan={schoolsInPlan} />;
+        return <TargetSchools schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
       case 'reach':
-        return <ReachSchools schools={schoolsData.reach_schools} onAddToPlan={handleAddToPlan} schoolsInPlan={schoolsInPlan} />;
+        return <ReachSchools schools={schoolsData.reach_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
       case 'timeline':
         if (!timelineData) {
           return (
@@ -266,7 +302,7 @@ function App() {
         }
         return <Timeline timelineData={timelineData} />;
       default:
-        return <TargetSchools schools={schoolsData.target_schools} onAddToPlan={handleAddToPlan} schoolsInPlan={schoolsInPlan} />;
+        return <TargetSchools schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
     }
   };
 

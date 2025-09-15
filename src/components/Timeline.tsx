@@ -41,33 +41,6 @@ const Timeline: React.FC<TimelineProps> = ({ timelineData }) => {
     return isCompleted ? 'bg-slate-700 border-slate-600' : 'bg-slate-800 border-slate-700';
   };
 
-  const getTaskDotColor = (phaseIndex: number, taskIndex: number, isCompleted: boolean) => {
-    if (isCompleted) {
-      return 'bg-gray-500'; // Gray dot for completed
-    }
-    
-    // Calculate total task position across all phases
-    let totalTaskIndex = 0;
-    for (let i = 0; i < phaseIndex; i++) {
-      totalTaskIndex += timelineData.timeline[i].tasks.length;
-    }
-    totalTaskIndex += taskIndex;
-    
-    // Get total number of tasks
-    const totalTasks = timelineData.timeline.reduce((sum, phase) => sum + phase.tasks.length, 0);
-    
-    // Calculate urgency based on position (earlier = more urgent)
-    const urgencyRatio = totalTaskIndex / (totalTasks - 1);
-    
-    if (urgencyRatio <= 0.33) {
-      return 'bg-red-500'; // Most urgent (top third)
-    } else if (urgencyRatio <= 0.66) {
-      return 'bg-orange-500'; // Medium urgent (middle third)
-    } else {
-      return 'bg-green-500'; // Least urgent (bottom third)
-    }
-  };
-
   const getUrgencyLabel = (deadline: string) => {
     const daysUntil = getDaysUntilDeadline(deadline);
     
@@ -82,14 +55,6 @@ const Timeline: React.FC<TimelineProps> = ({ timelineData }) => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'border-red-500 bg-red-900 text-red-300';
-      case 'medium': return 'border-yellow-500 bg-yellow-900 text-yellow-300';
-      case 'low': return 'border-green-500 bg-green-900 text-green-300';
-      default: return 'border-slate-500 bg-slate-900 text-slate-300';
-    }
-  };
 
   const getStatusIcon = (status: string) => {
     // Always return exclamation mark for all tasks
@@ -142,7 +107,6 @@ const Timeline: React.FC<TimelineProps> = ({ timelineData }) => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <div className={`w-3 h-3 rounded-full ${getTaskDotColor(phaseIndex, taskIndex, isCompleted)}`}></div>
                           <div className="relative group">
                             {getStatusIcon(task.status)}
                             {/* Tooltip */}
@@ -160,9 +124,6 @@ const Timeline: React.FC<TimelineProps> = ({ timelineData }) => {
                           <h4 className={`font-medium ${isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
                             {task.task}
                           </h4>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                            {task.priority}
-                          </span>
                           <span className="text-xs text-slate-400">
                             {getUrgencyLabel(task.deadline)}
                           </span>

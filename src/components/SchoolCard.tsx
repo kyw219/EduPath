@@ -4,7 +4,7 @@ import { School } from '../types';
 interface SchoolCardProps {
   school: School;
   type: 'target' | 'reach';
-  onAddToPlan?: (school: School) => void;
+  onTogglePlan?: (school: School) => void;
   schoolsInPlan?: Set<string>;
 }
 
@@ -15,7 +15,7 @@ interface QualificationItem {
   requiredValue: string;
 }
 
-const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onAddToPlan, schoolsInPlan }) => {
+const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, schoolsInPlan }) => {
 
   // Generate school abbreviation
   const getSchoolAbbreviation = (schoolName: string) => {
@@ -171,7 +171,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onAddToPlan, scho
             </div>
             <p className="text-slate-400 text-sm font-medium mb-4">Compatibility Score</p>
             
-            {/* Add to Plan Button */}
+            {/* Add/Remove Plan Button */}
             {(() => {
               const schoolId = `${school.school}-${school.program}`;
               const isInPlan = schoolsInPlan?.has(schoolId);
@@ -179,18 +179,17 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onAddToPlan, scho
               return (
                 <>
                   <button 
-                    onClick={() => onAddToPlan?.(school)}
-                    disabled={isInPlan}
+                    onClick={() => onTogglePlan?.(school)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors mb-2 ${
                       isInPlan 
-                        ? 'bg-green-600 text-white cursor-not-allowed'
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
                         : 'bg-blue-600 hover:bg-blue-700 text-white'
                     }`}
                   >
-                    {isInPlan ? 'Added to Plan' : 'Add to Plan'}
+                    {isInPlan ? 'Remove from Plan' : 'Add to Plan'}
                   </button>
                   <p className="text-slate-500 text-xs text-center">
-                    {isInPlan ? 'Check Timeline for tasks' : 'View in Timeline after adding'}
+                    {isInPlan ? 'Click to remove from timeline' : 'View in Timeline after adding'}
                   </p>
                 </>
               );
