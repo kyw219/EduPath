@@ -204,7 +204,11 @@ export default async function handler(req, res) {
 
       console.log('🔄 执行向量搜索...');
 
-      // 构建 target schools 查询
+      // 从用户档案中提取目标专业
+      const targetField = userProfile.match(/Target field:\s*([^.]+)/)?.[1]?.trim().toLowerCase();
+      console.log('🎯 检测到目标专业:', targetField);
+      
+      // 构建 target schools 查询 - 优先匹配目标专业
       let targetSql = `
         SELECT 
           id, school_name, program_name, country_region, broad_category, specific_field,
@@ -214,12 +218,29 @@ export default async function handler(req, res) {
         FROM schools`;
       
       let targetParams = [vectorString];
+      let whereConditions = [];
       
+      // 添加目标专业过滤
+      if (targetField) {
+        if (targetField.includes('cs') || targetField.includes('computer')) {
+          whereConditions.push(`(specific_field LIKE '%Computer%' OR program_name LIKE '%Computer%')`);
+          console.log('🎯 强制搜索计算机科学项目');
+        } else if (targetField.includes('law')) {
+          whereConditions.push(`(specific_field LIKE '%Law%' OR program_name LIKE '%Law%')`);
+          console.log('🎯 强制搜索法学项目');
+        }
+      }
+      
+      // 添加国家过滤
       if (preferredCountries.length > 0) {
         const placeholders = preferredCountries.map(() => '?').join(',');
-        targetSql += ` WHERE country_region IN (${placeholders})`;
+        whereConditions.push(`country_region IN (${placeholders})`);
         targetParams.push(...preferredCountries);
         console.log('🎯 Target schools - 应用国家过滤:', preferredCountries);
+      }
+      
+      if (whereConditions.length > 0) {
+        targetSql += ` WHERE ${whereConditions.join(' AND ')}`;
       }
       
       targetSql += ` ORDER BY similarity ASC LIMIT 3`;
@@ -252,18 +273,31 @@ export default async function handler(req, res) {
           qs_ranking, degree_type, duration, program_details, language_requirements,
           program_url, graduate_school_url, crawl_status,
           VEC_COSINE_DISTANCE(embedding, ?) AS similarity
-        FROM schools 
-        WHERE qs_ranking <= 20`;
+        FROM schools`;
       
       let reachParams = [vectorString];
+      let reachWhereConditions = ['qs_ranking <= 20'];
       
+      // 添加目标专业过滤
+      if (targetField) {
+        if (targetField.includes('cs') || targetField.includes('computer')) {
+          reachWhereConditions.push(`(specific_field LIKE '%Computer%' OR program_name LIKE '%Computer%')`);
+          console.log('🚀 Reach schools - 强制搜索计算机科学项目');
+        } else if (targetField.includes('law')) {
+          reachWhereConditions.push(`(specific_field LIKE '%Law%' OR program_name LIKE '%Law%')`);
+          console.log('🚀 Reach schools - 强制搜索法学项目');
+        }
+      }
+      
+      // 添加国家过滤
       if (preferredCountries.length > 0) {
         const placeholders = preferredCountries.map(() => '?').join(',');
-        reachSql += ` AND country_region IN (${placeholders})`;
+        reachWhereConditions.push(`country_region IN (${placeholders})`);
         reachParams.push(...preferredCountries);
         console.log('🚀 Reach schools - 应用国家过滤:', preferredCountries);
       }
       
+      reachSql += ` WHERE ${reachWhereConditions.join(' AND ')}`;
       reachSql += ` ORDER BY similarity ASC LIMIT 2`;
       
       const [reachRows] = await connection.execute(reachSql, reachParams);
