@@ -91,7 +91,7 @@ IMPORTANT:
     });
 
     let responseContent = completion.choices[0].message.content;
-    console.log(`📝 GPT 原始响应: ${responseContent.substring(0, 200)}...`);
+    console.log(`📝 GPT 原始响应 (${schoolData.school_name} - ${schoolData.program_name}): ${responseContent.substring(0, 300)}...`);
     
     // 清理响应
     responseContent = cleanGPTResponse(responseContent);
@@ -113,10 +113,11 @@ IMPORTANT:
     return structuredData;
     
   } catch (error) {
-    console.error('❌ LLM结构化失败:', error.message);
+    console.error(`❌ LLM结构化失败 (${schoolData.school_name} - ${schoolData.program_name}):`, error.message);
     console.error('❌ 错误详情:', error);
     
     // 返回默认结构
+    console.log('⚠️ 使用默认值 - 这可能导致学校信息重复');
     return {
       tuition: "$50,000",
       language_requirements: "TOEFL 90+ or IELTS 7.0+",
@@ -192,9 +193,12 @@ export default async function handler(req, res) {
       const userVector = userRows[0].profile_embedding;
       const userProfile = userRows[0].user_profile;
       
+      console.log('📝 原始用户档案文本:', userProfile);
+      
       // 提取用户偏好的国家
       const preferredCountries = getStandardCountryNames(userProfile);
       console.log('🌍 用户偏好国家:', preferredCountries);
+      console.log('🔍 国家过滤是否启用:', preferredCountries.length > 0);
 
       console.log('🔄 执行向量搜索...');
 
