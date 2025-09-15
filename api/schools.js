@@ -19,9 +19,13 @@ const dbConfig = {
 function cleanGPTResponse(response) {
   let cleaned = response.trim();
   
-  // 更强力的清理 - 移除所有可能的markdown标记
-  cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/, '');
-  cleaned = cleaned.replace(/```\s*$/, '');
+  // 强力清理所有可能的markdown标记
+  cleaned = cleaned.replace(/^```json\s*/gi, '');
+  cleaned = cleaned.replace(/^```\s*/g, '');
+  cleaned = cleaned.replace(/```\s*$/g, '');
+  
+  // 移除可能的反引号
+  cleaned = cleaned.replace(/^`+|`+$/g, '');
   
   return cleaned.trim();
 }
@@ -30,6 +34,8 @@ function cleanGPTResponse(response) {
 async function structureSchoolData(schoolData) {
   try {
     console.log(`🔄 正在结构化学校数据: ${schoolData.school_name} - ${schoolData.program_name}`);
+    console.log(`📝 Program details 长度: ${schoolData.program_details ? schoolData.program_details.length : 'NULL'}`);
+    console.log(`📝 Program details 前200字符: ${schoolData.program_details ? schoolData.program_details.substring(0, 200) : 'EMPTY'}`);
     
     // 使用 JSON Schema 结构化输出（OpenAI 最新功能）
     const completion = await openai.chat.completions.create({
@@ -99,8 +105,15 @@ IMPORTANT:
     console.log(`🧹 清理后响应: ${responseContent.substring(0, 200)}...`);
     
     // 解析 JSON
-    const structuredData = JSON.parse(responseContent);
-    console.log(`✅ 结构化成功: ${schoolData.school_name}`);
+    let structuredData;
+    try {
+      structuredData = JSON.parse(responseContent);
+      console.log(`✅ 结构化成功: ${schoolData.school_name}`);
+    } catch (parseError) {
+      console.error(`❌ JSON解析失败: ${parseError.message}`);
+      console.error(`❌ 清理后的响应: ${responseContent.substring(0, 500)}`);
+      throw parseError;
+    }
     
     // 验证必需字段
     const requiredFields = ['tuition', 'gpa_requirement', 'language_requirement', 'prerequisite_courses', 'degree_requirement', 'other_requirements'];
