@@ -118,9 +118,12 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
       <div className="grid grid-cols-12 gap-6">
         
         {/* Left Column - School Identity & Score */}
-        <div className="col-span-3 flex flex-col items-center text-center justify-center h-full py-4">
+        <div className="col-span-3 flex flex-col items-center text-center h-full py-4">
+          {/* Top spacing to align with column headers */}
+          <div className="h-6"></div>
+          
           {/* School Logo */}
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-6 ${
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
             type === 'target' 
               ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
               : 'bg-gradient-to-r from-orange-500 to-red-600'
@@ -131,18 +134,18 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
           </div>
 
           {/* School Name */}
-          <h3 className="text-white font-semibold text-lg mb-3 leading-relaxed">
+          <h3 className="text-white font-semibold text-lg mb-2 leading-relaxed">
             {school.school}
           </h3>
 
           {/* Full Program Name */}
-          <p className="text-gray-300 text-base font-medium mb-8 leading-relaxed">
+          <p className="text-gray-300 text-base font-medium mb-6 leading-relaxed">
             {getFullProgramName(school.program)}
           </p>
 
           {/* Compatibility Score - Enlarged */}
           <div className="flex flex-col items-center">
-            <div className="relative w-20 h-20 mb-4">
+            <div className="relative w-20 h-20 mb-3">
               {/* Background circle */}
               <div className="absolute inset-0 rounded-full bg-slate-700"></div>
               {/* Progress circle */}
@@ -159,7 +162,15 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
                 </span>
               </div>
             </div>
-            <p className="text-slate-400 text-sm font-medium">Compatibility Score</p>
+            <p className="text-slate-400 text-sm font-medium mb-4">Compatibility Score</p>
+            
+            {/* Add to Plan Button */}
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors mb-2">
+              Add to Plan
+            </button>
+            <p className="text-slate-500 text-xs text-center">
+              View in Timeline after adding
+            </p>
           </div>
         </div>
 
