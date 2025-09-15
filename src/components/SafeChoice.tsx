@@ -18,7 +18,7 @@ const SafeChoice: React.FC<SafeChoiceProps> = ({ schools, onTogglePlan, schoolsI
         </h2>
       </div>
 
-      <div className="max-h-[400px] overflow-y-auto space-y-6 pr-2 scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600">
+      <div className="min-h-[600px] space-y-6 pr-2">
         {schools.map((school, index) => (
           <SchoolCard 
             key={index} 
