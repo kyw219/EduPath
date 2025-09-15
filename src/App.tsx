@@ -47,6 +47,15 @@ function App() {
           (total, phase) => total + phase.tasks.length, 0
         );
         
+        // Recalculate total cost
+        const totalCost = updatedTimeline.timeline.reduce((total, phase) => {
+          return total + phase.tasks.reduce((phaseTotal, task) => {
+            const cost = task.cost.replace(/[^0-9]/g, '');
+            return phaseTotal + (cost ? parseInt(cost) : 0);
+          }, 0);
+        }, 0);
+        updatedTimeline.total_estimated_cost = `$${totalCost.toLocaleString()}`;
+        
         setTimelineData(updatedTimeline);
       }
     } else {
@@ -92,50 +101,147 @@ function App() {
         // Update totals
         updatedTimeline.total_tasks += newTasks.length;
         
+        // Calculate total cost
+        const totalCost = updatedTimeline.timeline.reduce((total, phase) => {
+          return total + phase.tasks.reduce((phaseTotal, task) => {
+            const cost = task.cost.replace(/[^0-9]/g, '');
+            return phaseTotal + (cost ? parseInt(cost) : 0);
+          }, 0);
+        }, 0);
+        updatedTimeline.total_estimated_cost = `$${totalCost.toLocaleString()}`;
+        
         setTimelineData(updatedTimeline);
       }
     }
   };
 
-  // Generate tasks for a specific school
+  // Generate realistic tasks for a specific school
   const generateSchoolTasks = (school: any) => {
     const schoolName = school.school;
+    const program = school.program || "Master's Program";
     const deadline = school.deadline || "January 15, 2025";
     
-    return [
-      {
+    // Determine program type for targeted tasks
+    const isCS = program.toLowerCase().includes('computer') || program.toLowerCase().includes('cs');
+    const isBusiness = program.toLowerCase().includes('business') || program.toLowerCase().includes('mba');
+    const isEngineering = program.toLowerCase().includes('engineering');
+    
+    const tasks = [];
+    
+    // Background Building Tasks (September - December 2024)
+    if (isCS) {
+      tasks.push({
         phase: "background",
-        task: `Research ${schoolName} program requirements`,
-        deadline: "October 15, 2024",
+        task: `Complete Linear Algebra course for ${schoolName} CS program`,
+        deadline: "November 30, 2024",
         priority: "high",
-        reason: `Understand specific requirements for ${school.program} at ${schoolName}`,
+        reason: `${schoolName} CS program requires strong mathematical foundation`,
+        cost: "$500"
+      });
+      tasks.push({
+        phase: "background",
+        task: `Gain programming internship experience`,
+        deadline: "December 15, 2024",
+        priority: "medium",
+        reason: `Strengthen technical background for competitive CS programs`,
         cost: "Free"
-      },
-      {
-        phase: "prep",
-        task: `Complete ${schoolName} application`,
-        deadline: deadline,
+      });
+    } else if (isBusiness) {
+      tasks.push({
+        phase: "background",
+        task: `Complete business internship or work experience`,
+        deadline: "November 30, 2024",
         priority: "high",
-        reason: `Submit application before deadline for ${schoolName}`,
-        cost: "$100"
-      },
-      {
-        phase: "prep",
-        task: `Submit transcripts to ${schoolName}`,
-        deadline: deadline,
-        priority: "medium",
-        reason: `Official transcripts required for ${schoolName} application`,
-        cost: "$25"
-      },
-      {
-        phase: "season",
-        task: `Follow up on ${schoolName} application status`,
-        deadline: "March 1, 2025",
-        priority: "medium",
-        reason: `Check application status and provide any additional materials`,
+        reason: `${schoolName} values practical business experience`,
         cost: "Free"
-      }
-    ];
+      });
+    } else if (isEngineering) {
+      tasks.push({
+        phase: "background",
+        task: `Complete Calculus and Physics prerequisites`,
+        deadline: "December 1, 2024",
+        priority: "high",
+        reason: `Essential foundation for engineering programs at ${schoolName}`,
+        cost: "$800"
+      });
+    }
+    
+    // General background task
+    tasks.push({
+      phase: "background",
+      task: `Improve GPA in relevant coursework`,
+      deadline: "December 20, 2024",
+      priority: "medium",
+      reason: `Strengthen academic profile for ${schoolName} admission`,
+      cost: "Free"
+    });
+    
+    // Application Prep Tasks (October 2024 - January 2025)
+    tasks.push({
+      phase: "prep",
+      task: `Take TOEFL exam (target: 100+)`,
+      deadline: "November 15, 2024",
+      priority: "high",
+      reason: `${schoolName} requires strong English proficiency`,
+      cost: "$245"
+    });
+    
+    tasks.push({
+      phase: "prep",
+      task: `Write Personal Statement for ${schoolName}`,
+      deadline: "December 1, 2024",
+      priority: "high",
+      reason: `Craft compelling narrative for ${program} application`,
+      cost: "$200"
+    });
+    
+    tasks.push({
+      phase: "prep",
+      task: `Request 3 recommendation letters`,
+      deadline: "November 20, 2024",
+      priority: "high",
+      reason: `Allow recommenders sufficient time for quality letters`,
+      cost: "Free"
+    });
+    
+    tasks.push({
+      phase: "prep",
+      task: `Update CV with recent achievements`,
+      deadline: "December 5, 2024",
+      priority: "medium",
+      reason: `Showcase relevant experience for ${schoolName} admission`,
+      cost: "Free"
+    });
+    
+    // Application Season Tasks (December 2024 - March 2025)
+    tasks.push({
+      phase: "season",
+      task: `Submit ${schoolName} online application`,
+      deadline: deadline,
+      priority: "high",
+      reason: `Complete application before ${schoolName} deadline`,
+      cost: "$100"
+    });
+    
+    tasks.push({
+      phase: "season",
+      task: `Upload official transcripts to ${schoolName}`,
+      deadline: deadline,
+      priority: "high",
+      reason: `Ensure all academic records are submitted`,
+      cost: "$25"
+    });
+    
+    tasks.push({
+      phase: "season",
+      task: `Follow up on ${schoolName} application status`,
+      deadline: "February 15, 2025",
+      priority: "medium",
+      reason: `Track application progress and provide additional materials if needed`,
+      cost: "Free"
+    });
+    
+    return tasks;
   };
 
   // Initialize timeline with basic structure if no data exists
@@ -145,19 +251,19 @@ function App() {
         timeline: [
           {
             phase: "Background Building",
-            period: "September - November 2024",
+            period: "September - December 2024",
             color: "#EF4444",
             tasks: []
           },
           {
             phase: "Application Prep", 
-            period: "December 2024 - January 2025",
+            period: "October 2024 - January 2025",
             color: "#F59E0B",
             tasks: []
           },
           {
             phase: "Application Season",
-            period: "February - April 2025",
+            period: "December 2024 - March 2025",
             color: "#10B981",
             tasks: []
           }
