@@ -74,9 +74,14 @@ Based on ALL the above information, extract and return a JSON object with exactl
 }
 
 IMPORTANT: 
-- Extract specific requirements for each category
-- If no specific requirement exists, use 'No specific requirement' or 'Not specified'
-- Be precise with numbers and scores`
+- EXTRACT SPECIFIC DETAILS from the program_details text above
+- For GPA: Look for GPA requirements, transcript requirements, or academic standing mentions
+- For prerequisites: Extract ALL specific courses mentioned (Calculus, Linear Algebra, Physics, etc.)
+- For language: Use the exact TOEFL/IELTS scores from language_requirements field
+- For degree: Extract specific degree requirements (Engineering, Science, etc.)
+- For other: Include GRE scores, work experience, research experience mentioned
+- DO NOT use generic phrases like "No specific requirement" - extract actual details from the text
+- If truly no information exists, then use "Not specified"`
       }],
       response_format: { type: "json_object" }, // 强制 JSON 输出
       max_tokens: 600,
