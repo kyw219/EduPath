@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
+import Home from './components/Home';
 import TargetSchools from './components/TargetSchools';
 import ReachSchools from './components/ReachSchools';
 import Timeline from './components/Timeline';
@@ -9,7 +10,7 @@ import { ChatMessage, SchoolsResponse, TimelineResponse } from './types';
 import { intelligentChat, analyzeChat, getSchools, getTimeline } from './api/realApi';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('target');
+  const [activeTab, setActiveTab] = useState('home');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
@@ -366,33 +367,50 @@ function App() {
   };
 
   const renderContent = () => {
-    if (!schoolsData || !timelineData) {
-      return (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <span className="text-white text-2xl">🎓</span>
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Welcome to EduPath AI</h2>
-            <p className="text-slate-400 mb-6">Start chatting to get personalized school recommendations</p>
-            <div className="text-slate-500 text-sm">
-              <p>Tell me about your:</p>
-              <ul className="mt-2 space-y-1">
-                <li>• Current major & GPA</li>
-                <li>• Target field of study</li>
-                <li>• Relevant experience</li>
-                <li>• Location & budget preferences</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     switch (activeTab) {
+      case 'home':
+        return <Home onStartAnalysis={() => setShowChat(true)} />;
       case 'target':
+        if (!schoolsData) {
+          return (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center opacity-50">
+                  <span className="text-white text-2xl">🎓</span>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">No Analysis Yet</h2>
+                <p className="text-slate-400 mb-6">Complete your AI analysis to see school recommendations</p>
+                <button 
+                  onClick={() => setShowChat(true)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+                >
+                  Start Analysis
+                </button>
+              </div>
+            </div>
+          );
+        }
         return <TargetSchools schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
       case 'reach':
+        if (!schoolsData) {
+          return (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center opacity-50">
+                  <span className="text-white text-2xl">🎯</span>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">No Analysis Yet</h2>
+                <p className="text-slate-400 mb-6">Complete your AI analysis to see reach school recommendations</p>
+                <button 
+                  onClick={() => setShowChat(true)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+                >
+                  Start Analysis
+                </button>
+              </div>
+            </div>
+          );
+        }
         return <ReachSchools schools={schoolsData.reach_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
       case 'timeline':
         if (!timelineData) {
@@ -408,7 +426,7 @@ function App() {
         }
         return <Timeline timelineData={timelineData} />;
       default:
-        return <TargetSchools schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
+        return <Home onStartAnalysis={() => setShowChat(true)} />;
     }
   };
 

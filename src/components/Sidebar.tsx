@@ -4,7 +4,7 @@ import {
   Target, 
   Calendar,
   User,
-  MessageCircle
+  Home
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -14,8 +14,9 @@ interface SidebarProps {
   showChat: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onChatToggle, showChat }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
   const menuItems = [
+    { id: 'home', icon: Home, label: 'Home' },
     { id: 'target', icon: Target, label: 'Target Schools' },
     { id: 'reach', icon: Target, label: 'Reach Schools' },
     { id: 'timeline', icon: Calendar, label: 'Timeline' }
