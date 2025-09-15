@@ -31,69 +31,81 @@ function App() {
     const background: string[] = [];
     const experience: string[] = [];
 
+    console.log('🔍 提取用户信息，当前消息:', messages);
+
     // 遍历用户消息，查找编号回答
-    messages.forEach(message => {
+    messages.forEach((message, index) => {
       if (message.role === 'user') {
         const content = message.content.toLowerCase();
+        console.log(`📝 消息 ${index}:`, content);
         
-        // 1. GPA (寻找 "1." 后的数字)
-        const gpaMatch = content.match(/1\.?\s*([0-9.]+)/);
+        // 更灵活的提取逻辑 - 支持多种格式
+        
+        // 1. GPA (寻找数字，可能在"1."后面或单独出现)
+        const gpaMatch = content.match(/(?:1\.?\s*)?([0-9]+\.?[0-9]*)\s*(?:\/4|gpa|out of 4)?/);
         if (gpaMatch) {
-          gpa = parseFloat(gpaMatch[1]);
-        }
-        
-        // 2. 编程语言 (寻找 "2." 后的内容)
-        const progMatch = content.match(/2\.?\s*(.+?)(?=\n|3\.|$)/);
-        if (progMatch) {
-          const progText = progMatch[1];
-          if (progText.includes('python')) background.push('Python');
-          if (progText.includes('java')) background.push('Java');
-          if (progText.includes('c++')) background.push('C++');
-          if (progText.includes('javascript')) background.push('JavaScript');
-        }
-        
-        // 3. 语言成绩 (寻找 "3." 后的数字)
-        const langMatch = content.match(/3\.?\s*(\d+(?:\.\d+)?)/);
-        if (langMatch) {
-          const score = parseFloat(langMatch[1]);
-          if (score > 9) {
-            toefl = score; // 大于9认为是TOEFL
-          } else {
-            ielts = score; // 小于等于9认为是IELTS
+          const gpaValue = parseFloat(gpaMatch[1]);
+          if (gpaValue >= 1 && gpaValue <= 4) { // 合理的GPA范围
+            gpa = gpaValue;
+            console.log('✅ 找到GPA:', gpa);
           }
         }
         
-        // 4. 项目经验 (寻找 "4." 后的内容)
-        const expMatch = content.match(/4\.?\s*(.+?)(?=\n|5\.|$)/);
-        if (expMatch) {
-          const expText = expMatch[1].toLowerCase();
-          if (expText.includes('internship')) experience.push('Internship');
-          if (expText.includes('research')) experience.push('Research');
-          if (expText.includes('project')) experience.push('Course Projects');
-          if (expText.includes('work')) experience.push('Work Experience');
+        // 2. 编程语言 (更灵活的匹配)
+        if (content.includes('python')) background.push('Python');
+        if (content.includes('java') && !content.includes('javascript')) background.push('Java');
+        if (content.includes('c++') || content.includes('cpp')) background.push('C++');
+        if (content.includes('javascript') || content.includes('js')) background.push('JavaScript');
+        
+        // 3. 语言成绩 (寻找两位或三位数字)
+        const langMatch = content.match(/(?:3\.?\s*)?(\d{2,3})(?!\d)/);
+        if (langMatch) {
+          const score = parseInt(langMatch[1]);
+          if (score >= 80 && score <= 120) {
+            toefl = score; // TOEFL范围
+            console.log('✅ 找到TOEFL:', toefl);
+          } else if (score >= 4 && score <= 9) {
+            ielts = score / 10; // 可能是整数形式的IELTS
+            console.log('✅ 找到IELTS:', ielts);
+          }
         }
         
-        // 5. 数学课程 (寻找 "5." 后的内容)
-        const mathMatch = content.match(/5\.?\s*(.+?)(?=\n|6\.|$)/);
-        if (mathMatch) {
-          const mathText = mathMatch[1].toLowerCase();
-          if (mathText.includes('linear algebra')) background.push('Linear Algebra');
-          if (mathText.includes('discrete math')) background.push('Discrete Mathematics');
-          if (mathText.includes('calculus')) background.push('Calculus');
-          if (mathText.includes('statistics')) background.push('Statistics');
+        // 也检查小数形式的IELTS
+        const ieltsMatch = content.match(/(\d\.\d)/);
+        if (ieltsMatch) {
+          const score = parseFloat(ieltsMatch[1]);
+          if (score >= 4.0 && score <= 9.0) {
+            ielts = score;
+            console.log('✅ 找到IELTS (小数):', ielts);
+          }
         }
+        
+        // 4. 项目经验
+        if (content.includes('internship')) experience.push('Internship');
+        if (content.includes('research')) experience.push('Research');
+        if (content.includes('project')) experience.push('Course Projects');
+        if (content.includes('work') && !content.includes('coursework')) experience.push('Work Experience');
+        
+        // 5. 数学课程 (更灵活的匹配)
+        if (content.includes('linear algebra') || content.includes('linear algrbra')) background.push('Linear Algebra');
+        if (content.includes('discrete math') || content.includes('dicrete math')) background.push('Discrete Mathematics');
+        if (content.includes('calculus') || content.includes('calculate')) background.push('Calculus');
+        if (content.includes('statistics') || content.includes('stats')) background.push('Statistics');
       }
     });
 
-    return {
+    const profile = {
       name: 'User',
       gpa: gpa,
       toefl: toefl,
       ielts: ielts,
-      background: background.length > 0 ? background : ['General Background'],
+      background: background.length > 0 ? [...new Set(background)] : ['General Background'], // 去重
       degree: 'Bachelor\'s Degree',
-      experience: experience.length > 0 ? experience : ['Academic Background']
+      experience: experience.length > 0 ? [...new Set(experience)] : ['Academic Background'] // 去重
     };
+
+    console.log('🎯 最终提取的用户档案:', profile);
+    return profile;
   };
 
   // Handle adding/removing school to/from plan

@@ -112,11 +112,11 @@ SPECIALIZED QUESTIONS (optional, field-specific):
 
 LOGIC:
 - Set has_sufficient_info = true only if ALL 5 basic pieces are provided
-- Set needs_specialized_questions = true if: basic info is complete AND target field matches major fields (cs, business, engineering, etc.) AND user has NOT been asked specialized questions yet
+- Set needs_specialized_questions = true if: basic info is complete AND target field is 'cs' or 'computer science' AND no specialized questions have been asked yet
 - Set specialized_field to the detected field (cs, business, engineering, medicine, sciences, public_health, arts, social_sciences, education, law)
 - Extract any specialized answers provided in specialized_answers object
 - Set is_responding_to_specialized = true if user is responding after specialized questions were shown (any message that provides specialized info or says they want to skip/proceed)
-- Set ready_to_analyze = true ONLY if user explicitly wants to start analysis (says "analyze", "start", "go", etc.) OR if they've answered specialized questions
+- Set ready_to_analyze = true ONLY if user explicitly wants to start analysis (says "analyze", "start", "go", etc.)
 
 IMPORTANT: 
 - Use empty string "" for missing information
