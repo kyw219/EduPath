@@ -14,6 +14,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState<'analyzing' | 'matching' | 'timeline' | 'complete'>('analyzing');
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [schoolsData, setSchoolsData] = useState<SchoolsResponse | null>(null);
   const [timelineData, setTimelineData] = useState<TimelineResponse | null>(null);
@@ -403,6 +404,7 @@ function App() {
         // If enough information is available, start analysis
         if (chatResponse.shouldAnalyze) {
           setIsAnalyzing(true);
+          setAnalysisProgress('analyzing');
           
           // Add AI reply
           setMessages(prev => [...prev, {
@@ -414,6 +416,9 @@ function App() {
             // Analyze user profile
             const analysisResponse = await analyzeChat(chatResponse.extractedProfile);
             setAnalysisId(analysisResponse.analysis_id);
+            
+            // Update progress to matching phase
+            setAnalysisProgress('matching');
             
             // Get school recommendations
             const schools = await getSchools(analysisResponse.analysis_id);
@@ -444,9 +449,15 @@ function App() {
               setSchoolsData(schools);
             }
             
+            // Update progress to timeline phase
+            setAnalysisProgress('timeline');
+            
             // Get timeline
             const timeline = await getTimeline(analysisResponse.analysis_id);
             setTimelineData(timeline);
+            
+            // Mark as complete
+            setAnalysisProgress('complete');
 
             // Send completion message
             setMessages(prev => [...prev, {
@@ -607,6 +618,7 @@ function App() {
             messages={messages} 
             onSendMessage={handleSendMessage}
             isAnalyzing={isAnalyzing}
+            analysisProgress={analysisProgress}
             onClose={() => setShowChat(false)}
           />
         )}

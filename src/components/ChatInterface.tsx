@@ -3,52 +3,46 @@ import { Send, Bot, User, X } from 'lucide-react';
 import { ChatMessage } from '../types';
 
 // 串行加载步骤组件
-const SequentialLoader: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+interface SequentialLoaderProps {
+  analysisProgress?: 'analyzing' | 'matching' | 'timeline' | 'complete';
+}
 
+const SequentialLoader: React.FC<SequentialLoaderProps> = ({ analysisProgress = 'analyzing' }) => {
   const steps = [
-    { text: "Analyzing your academic background...", color: "border-blue-400" },
-    { text: "Matching the most suitable schools and programs...", color: "border-purple-400" },
-    { text: "Generating personalized application timeline...", color: "border-green-400" }
+    { text: "Analyzing your academic background...", color: "border-blue-400", key: 'analyzing' },
+    { text: "Matching the most suitable schools and programs...", color: "border-purple-400", key: 'matching' },
+    { text: "Generating personalized application timeline...", color: "border-green-400", key: 'timeline' }
   ];
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentStep(prev => {
-        if (prev < steps.length - 1) {
-          setCompletedSteps(current => [...current, prev]);
-          return prev + 1;
-        } else {
-          // 最后一步也标记为完成
-          if (!completedSteps.includes(prev)) {
-            setCompletedSteps(current => [...current, prev]);
-          }
-          return prev;
-        }
-      });
-    }, 2000); // 每2秒切换到下一步
+  const getCurrentStepIndex = () => {
+    switch (analysisProgress) {
+      case 'analyzing': return 0;
+      case 'matching': return 1;
+      case 'timeline': return 2;
+      case 'complete': return 3;
+      default: return 0;
+    }
+  };
 
-    return () => clearInterval(timer);
-  }, []);
+  const currentStepIndex = getCurrentStepIndex();
 
   return (
     <div className="text-xs text-slate-300 space-y-2">
       {steps.map((step, index) => (
         <div key={index} className="flex items-center justify-center space-x-2">
-          {completedSteps.includes(index) ? (
+          {index < currentStepIndex ? (
             // 已完成的步骤显示绿色对勾
             <div className="w-3 h-3 rounded-full bg-green-400 flex items-center justify-center">
               <span className="text-white text-xs">✓</span>
             </div>
-          ) : currentStep === index ? (
+          ) : index === currentStepIndex && analysisProgress !== 'complete' ? (
             // 当前步骤显示旋转动画
             <div className={`animate-spin w-3 h-3 border-2 ${step.color} border-t-transparent rounded-full`}></div>
           ) : (
             // 未开始的步骤显示灰色圆点
             <div className="w-3 h-3 rounded-full bg-slate-600"></div>
           )}
-          <span className={completedSteps.includes(index) ? "text-green-400" : currentStep === index ? "text-white" : "text-slate-500"}>
+          <span className={index < currentStepIndex ? "text-green-400" : index === currentStepIndex ? "text-white" : "text-slate-500"}>
             {step.text}
           </span>
         </div>
@@ -61,10 +55,11 @@ interface ChatInterfaceProps {
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   isAnalyzing?: boolean;
+  analysisProgress?: 'analyzing' | 'matching' | 'timeline' | 'complete';
   onClose?: () => void;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, isAnalyzing, onClose }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, isAnalyzing, analysisProgress, onClose }) => {
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -164,7 +159,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
                   <div className="animate-spin w-4 h-4 border-2 border-teal-400 border-t-transparent rounded-full"></div>
                   <span className="font-medium">Analyzing the best programs for you...</span>
                 </div>
-                <SequentialLoader />
+                <SequentialLoader analysisProgress={analysisProgress} />
               </div>
             </div>
           </div>
