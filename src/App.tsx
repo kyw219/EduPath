@@ -400,15 +400,15 @@ function App() {
         // Use new intelligent chat API
         const chatResponse = await intelligentChat(updatedMessages);
         
-        // Add AI reply
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: chatResponse.reply
-        }]);
-        
         // If enough information is available, start analysis
         if (chatResponse.shouldAnalyze) {
           setIsAnalyzing(true);
+          
+          // Add AI reply
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: chatResponse.reply
+          }]);
           
           try {
             // Analyze user profile
@@ -468,6 +468,12 @@ function App() {
           } finally {
             setIsAnalyzing(false);
           }
+        } else {
+          // Add AI reply for non-analysis cases
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: chatResponse.reply
+          }]);
         }
         
       } catch (error) {

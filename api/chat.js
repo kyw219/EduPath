@@ -327,9 +327,7 @@ When you're ready to see your analysis results, just say "start analysis" or "an
 • Language Score: ${extractedData.language_test}
 • Preferred Countries: ${extractedData.preferred_countries?.join(', ')}
 
-I'm ready to analyze 50+ programs and create your personalized recommendations!
-
-Just say "start analysis" or "analyze" when you're ready! 🎯`;
+Starting analysis now... 🔄`;
     } else {
       // 构建已获得信息的确认
       let confirmation = "";
