@@ -32,8 +32,8 @@ export default async function handler(req, res) {
     // 生成 session_id
     const sessionId = uuidv4();
 
-    // 使用传入的用户档案
-    const profileText = `${userProfile.current_major} ${userProfile.target_field} GPA: ${userProfile.gpa_score} Countries: ${userProfile.preferred_countries?.join(', ')} Language: ${userProfile.language_test} ${userProfile.additional_info || ''}`;
+    // 构建用户档案，强调目标专业
+    const profileText = `Target field: ${userProfile.target_field}. Background: ${userProfile.current_major}. GPA: ${userProfile.gpa_score}. Countries: ${userProfile.preferred_countries?.join(', ')}. Language: ${userProfile.language_test}. ${userProfile.additional_info || ''}`;
 
     console.log('🔄 向量化用户档案...');
     
