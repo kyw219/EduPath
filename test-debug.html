@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Profile Test</title>
+</head>
+<body>
+    <h1>Profile Debug Test</h1>
+    <button onclick="testProfile()">Test Profile Similarity</button>
+    <div id="results"></div>
+
+    <script>
+        async function testProfile() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('/api/debug-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        testProfile: "Target field: cs. Background: law. GPA: 3.5. Countries: usa. Language: TOFLE 103."
+                    })
+                });
+                
+                const data = await response.json();
+                resultsDiv.innerHTML = `
+                    <h3>Test Results:</h3>
+                    <p><strong>Test Profile:</strong> ${data.test_profile}</p>
+                    <h4>Law Similarities:</h4>
+                    <ul>
+                        ${data.law_similarities.map(item => 
+                            `<li>${item.school} - ${item.program} (${item.similarity})</li>`
+                        ).join('')}
+                    </ul>
+                    <h4>CS Similarities:</h4>
+                    <ul>
+                        ${data.cs_similarities.map(item => 
+                            `<li>${item.school} - ${item.program} (${item.similarity})</li>`
+                        ).join('')}
+                    </ul>
+                    <h4>Analysis:</h4>
+                    <p>Best Law Similarity: ${data.analysis.best_law_similarity}</p>
+                    <p>Best CS Similarity: ${data.analysis.best_cs_similarity}</p>
+                    <p><strong>Winner: ${data.analysis.winner}</strong></p>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
