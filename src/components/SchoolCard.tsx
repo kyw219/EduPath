@@ -118,7 +118,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
       <div className="grid grid-cols-12 gap-6">
         
         {/* Left Column - School Identity & Score */}
-        <div className="col-span-3">
+        <div className="col-span-3 flex flex-col items-center text-center">
           {/* School Logo */}
           <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
             type === 'target' 
@@ -141,7 +141,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type }) => {
           </p>
 
           {/* Compatibility Score - Enlarged */}
-          <div className="flex flex-col items-start">
+          <div className="flex flex-col items-center">
             <div className="relative w-20 h-20 mb-3">
               {/* Background circle */}
               <div className="absolute inset-0 rounded-full bg-slate-700"></div>
