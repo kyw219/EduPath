@@ -208,8 +208,8 @@ export default async function handler(req, res) {
       const targetField = userProfile.match(/Target field:\s*([^.]+)/)?.[1]?.trim().toLowerCase();
       console.log('🎯 检测到目标专业:', targetField);
       
-      // 构建 target schools 查询 - 优先匹配目标专业
-      let targetSql = `
+      // 获取最匹配的50个候选学校
+      let candidatesSql = `
         SELECT 
           id, school_name, program_name, country_region, broad_category, specific_field,
           qs_ranking, degree_type, duration, program_details, language_requirements,
@@ -217,17 +217,20 @@ export default async function handler(req, res) {
           VEC_COSINE_DISTANCE(embedding, ?) AS similarity
         FROM schools`;
       
-      let targetParams = [vectorString];
+      let candidatesParams = [vectorString];
       let whereConditions = [];
       
       // 添加目标专业过滤
       if (targetField) {
         if (targetField.includes('cs') || targetField.includes('computer')) {
-          whereConditions.push(`(specific_field LIKE '%Computer%' OR program_name LIKE '%Computer%')`);
-          console.log('🎯 强制搜索计算机科学项目');
+          whereConditions.push(`(specific_field LIKE '%Computer%' OR program_name LIKE '%Computer%') AND program_name NOT LIKE '%Law%'`);
+          console.log('🎯 搜索计算机科学项目');
+        } else if (targetField.includes('mba') || targetField.includes('business')) {
+          whereConditions.push(`(specific_field LIKE '%Business%' OR program_name LIKE '%MBA%' OR program_name LIKE '%Business%') AND program_name NOT LIKE '%Law%'`);
+          console.log('🎯 搜索商科项目');
         } else if (targetField.includes('law')) {
           whereConditions.push(`(specific_field LIKE '%Law%' OR program_name LIKE '%Law%')`);
-          console.log('🎯 强制搜索法学项目');
+          console.log('🎯 搜索法学项目');
         }
       }
       
@@ -235,25 +238,52 @@ export default async function handler(req, res) {
       if (preferredCountries.length > 0) {
         const placeholders = preferredCountries.map(() => '?').join(',');
         whereConditions.push(`country_region IN (${placeholders})`);
-        targetParams.push(...preferredCountries);
-        console.log('🎯 Target schools - 应用国家过滤:', preferredCountries);
+        candidatesParams.push(...preferredCountries);
+        console.log('🌍 应用国家过滤:', preferredCountries);
       }
       
       if (whereConditions.length > 0) {
-        targetSql += ` WHERE ${whereConditions.join(' AND ')}`;
+        candidatesSql += ` WHERE ${whereConditions.join(' AND ')}`;
       }
       
-      targetSql += ` ORDER BY similarity ASC LIMIT 3`;
+      candidatesSql += ` ORDER BY similarity ASC LIMIT 50`;
       
-      const [targetRows] = await connection.execute(targetSql, targetParams);
+      const [candidateRows] = await connection.execute(candidatesSql, candidatesParams);
+      console.log(`🔍 找到 ${candidateRows.length} 个候选学校`);
 
-      // 使用 LLM 结构化 target schools 数据
-      const targetSchools = await Promise.all(targetRows.map(async row => {
+      // 智能三分类算法
+      function classifySchools(candidates) {
+        const dreamSchools = [];
+        const perfectMatch = [];
+        const safeChoice = [];
+        
+        candidates.forEach(school => {
+          const ranking = school.qs_ranking;
+          const similarity = school.similarity;
+          
+          if (ranking <= 30 && dreamSchools.length < 4) {
+            dreamSchools.push(school);
+          } else if (ranking <= 80 && similarity <= 0.15 && perfectMatch.length < 6) {
+            perfectMatch.push(school);
+          } else if (ranking <= 100 && similarity <= 0.10 && safeChoice.length < 3) {
+            safeChoice.push(school);
+          }
+        });
+        
+        return { dreamSchools, perfectMatch, safeChoice };
+      }
+      
+      const { dreamSchools, perfectMatch, safeChoice } = classifySchools(candidateRows);
+      console.log(`📊 分类结果: Dream(${dreamSchools.length}) Perfect(${perfectMatch.length}) Safe(${safeChoice.length})`);
+      
+      // 处理target schools (Perfect Match + Safe Choice)
+      const targetCandidates = [...perfectMatch, ...safeChoice];
+      const targetSchools = await Promise.all(targetCandidates.map(async row => {
         const structuredData = await structureSchoolData(row);
         return {
           school: row.school_name,
           program: row.program_name,
-          match_score: Math.round((1 - row.similarity) * 100),
+          match_score: Math.round((1 - row.similarity) * 1000) / 10,
           ranking: row.qs_ranking,
           deadline: "2025-01-15",
           tuition: structuredData.tuition,
@@ -266,49 +296,13 @@ export default async function handler(req, res) {
         };
       }));
 
-      // 构建 reach schools 查询 (排名更高的学校)
-      let reachSql = `
-        SELECT 
-          id, school_name, program_name, country_region, broad_category, specific_field,
-          qs_ranking, degree_type, duration, program_details, language_requirements,
-          program_url, graduate_school_url, crawl_status,
-          VEC_COSINE_DISTANCE(embedding, ?) AS similarity
-        FROM schools`;
-      
-      let reachParams = [vectorString];
-      let reachWhereConditions = ['qs_ranking <= 20'];
-      
-      // 添加目标专业过滤
-      if (targetField) {
-        if (targetField.includes('cs') || targetField.includes('computer')) {
-          reachWhereConditions.push(`(specific_field LIKE '%Computer%' OR program_name LIKE '%Computer%')`);
-          console.log('🚀 Reach schools - 强制搜索计算机科学项目');
-        } else if (targetField.includes('law')) {
-          reachWhereConditions.push(`(specific_field LIKE '%Law%' OR program_name LIKE '%Law%')`);
-          console.log('🚀 Reach schools - 强制搜索法学项目');
-        }
-      }
-      
-      // 添加国家过滤
-      if (preferredCountries.length > 0) {
-        const placeholders = preferredCountries.map(() => '?').join(',');
-        reachWhereConditions.push(`country_region IN (${placeholders})`);
-        reachParams.push(...preferredCountries);
-        console.log('🚀 Reach schools - 应用国家过滤:', preferredCountries);
-      }
-      
-      reachSql += ` WHERE ${reachWhereConditions.join(' AND ')}`;
-      reachSql += ` ORDER BY similarity ASC LIMIT 2`;
-      
-      const [reachRows] = await connection.execute(reachSql, reachParams);
-
-      // 使用 LLM 结构化 reach schools 数据
-      const reachSchools = await Promise.all(reachRows.map(async row => {
+      // 处理reach schools (Dream Schools)
+      const reachSchools = await Promise.all(dreamSchools.map(async row => {
         const structuredData = await structureSchoolData(row);
         return {
           school: row.school_name,
           program: row.program_name,
-          match_score: Math.max(50, Math.round((1 - row.similarity) * 100) - 20),
+          match_score: Math.max(50.0, Math.round((1 - row.similarity) * 1000) / 10 - 1.5),
           ranking: row.qs_ranking,
           gaps: ["Advanced Math", "Research Experience"],
           suggestions: "Complete prerequisite courses and gain research experience",

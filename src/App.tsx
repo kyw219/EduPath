@@ -3,8 +3,9 @@ import { MessageCircle } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
 import Home from './components/Home';
-import TargetSchools from './components/TargetSchools';
-import ReachSchools from './components/ReachSchools';
+import PerfectMatch from './components/TargetSchools';
+import DreamSchools from './components/ReachSchools';
+import SafeChoice from './components/SafeChoice';
 import Timeline from './components/Timeline';
 import { ChatMessage, SchoolsResponse, TimelineResponse } from './types';
 import { intelligentChat, analyzeChat, getSchools, getTimeline } from './api/realApi';
@@ -328,7 +329,18 @@ function App() {
             
             // Get school recommendations
             const schools = await getSchools(analysisResponse.analysis_id);
-            setSchoolsData(schools);
+            
+            // 临时处理：从现有数据中模拟safe_schools，直到后端完全准备好
+            if (!schools.safe_schools && schools.target_schools.length > 3) {
+              const enhancedSchools = {
+                ...schools,
+                safe_schools: schools.target_schools.slice(-2), // 取最后2个作为safe choice
+                target_schools: schools.target_schools.slice(0, -2) // 其余作为perfect match
+              };
+              setSchoolsData(enhancedSchools);
+            } else {
+              setSchoolsData(schools);
+            }
             
             // Get timeline
             const timeline = await getTimeline(analysisResponse.analysis_id);
@@ -390,17 +402,17 @@ function App() {
             </div>
           );
         }
-        return <TargetSchools schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
+        return <PerfectMatch schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
       case 'reach':
         if (!schoolsData) {
           return (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center opacity-50">
-                  <span className="text-white text-2xl">🎯</span>
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl flex items-center justify-center opacity-50">
+                  <span className="text-white text-2xl">🏆</span>
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-2">No Analysis Yet</h2>
-                <p className="text-slate-400 mb-6">Complete your AI analysis to see reach school recommendations</p>
+                <p className="text-slate-400 mb-6">Complete your AI analysis to see dream school recommendations</p>
                 <button 
                   onClick={() => setShowChat(true)}
                   className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
@@ -411,7 +423,28 @@ function App() {
             </div>
           );
         }
-        return <ReachSchools schools={schoolsData.reach_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
+        return <DreamSchools schools={schoolsData.reach_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
+      case 'safe':
+        if (!schoolsData || !schoolsData.safe_schools) {
+          return (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center opacity-50">
+                  <span className="text-white text-2xl">🛡️</span>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">No Analysis Yet</h2>
+                <p className="text-slate-400 mb-6">Complete your AI analysis to see safe choice recommendations</p>
+                <button 
+                  onClick={() => setShowChat(true)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+                >
+                  Start Analysis
+                </button>
+              </div>
+            </div>
+          );
+        }
+        return <SafeChoice schools={schoolsData.safe_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
       case 'timeline':
         if (!timelineData) {
           return (

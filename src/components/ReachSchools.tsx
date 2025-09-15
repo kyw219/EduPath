@@ -2,23 +2,23 @@ import React from 'react';
 import { School } from '../types';
 import SchoolCard from './SchoolCard';
 
-interface ReachSchoolsProps {
+interface DreamSchoolsProps {
   schools: School[];
   onTogglePlan: (school: School) => void;
   schoolsInPlan: Set<string>;
 }
 
-const ReachSchools: React.FC<ReachSchoolsProps> = ({ schools, onTogglePlan, schoolsInPlan }) => {
+const DreamSchools: React.FC<DreamSchoolsProps> = ({ schools, onTogglePlan, schoolsInPlan }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center">
         <h2 className="text-2xl font-bold text-white flex items-center">
           <span className="w-3 h-3 bg-orange-500 rounded-full mr-3"></span>
-          Reach Schools
+          Dream Schools
         </h2>
       </div>
 
-      <div className="space-y-6">
+      <div className="max-h-[500px] overflow-y-auto space-y-6 pr-2 scrollbar-thin scrollbar-track-slate-800 scrollbar-thumb-slate-600">
         {schools.map((school, index) => (
           <SchoolCard 
             key={index} 
@@ -33,4 +33,4 @@ const ReachSchools: React.FC<ReachSchoolsProps> = ({ schools, onTogglePlan, scho
   );
 };
 
-export default ReachSchools;
+export default DreamSchools;

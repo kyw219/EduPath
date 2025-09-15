@@ -32,7 +32,7 @@ with conn.cursor() as cursor:
 print("✓ Existing data cleared")
 
 # 读取CSV文件
-csv_path = '../data/QS_Top50_Master_Programs_VectorDB_Ready.csv'
+csv_path = '../data/QS_Top100_Master_Programs_Corrected.csv'
 df = pd.read_csv(csv_path)
 
 print(f"Loaded {len(df)} records from CSV")

@@ -52,6 +52,7 @@ export interface AnalysisResponse {
 export interface SchoolsResponse {
   target_schools: School[];
   reach_schools: School[];
+  safe_schools?: School[];
 }
 
 export interface TimelineResponse {

@@ -3,7 +3,7 @@ import { School } from '../types';
 
 interface SchoolCardProps {
   school: School;
-  type: 'target' | 'reach';
+  type: 'target' | 'reach' | 'safe';
   onTogglePlan?: (school: School) => void;
   schoolsInPlan?: Set<string>;
 }
@@ -132,8 +132,10 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
           {/* School Logo */}
           <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
             type === 'target' 
-              ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
-              : 'bg-gradient-to-r from-orange-500 to-red-600'
+              ? 'bg-gradient-to-r from-green-500 to-emerald-600'
+              : type === 'reach'
+              ? 'bg-gradient-to-r from-orange-500 to-red-600'
+              : 'bg-gradient-to-r from-blue-500 to-cyan-600'
           }`}>
             <span className="text-white font-bold text-lg">
               {getSchoolAbbreviation(school.school)}
@@ -164,8 +166,8 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
               ></div>
               {/* Inner circle with score */}
               <div className="absolute inset-2 bg-slate-800 rounded-full flex items-center justify-center">
-                <span className={`font-bold text-xl ${getScoreColor(school.match_score)}`}>
-                  {school.match_score}
+                <span className={`font-bold text-lg ${getScoreColor(school.match_score)}`}>
+                  {school.match_score.toFixed(1)}
                 </span>
               </div>
             </div>
