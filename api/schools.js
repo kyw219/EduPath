@@ -45,52 +45,38 @@ async function structureSchoolData(schoolData) {
         content: "You are a data extraction expert. Extract information from university program details and return ONLY valid JSON. No markdown, no explanations, just pure JSON."
       }, {
         role: "user", 
-        content: `Extract structured information from this university program using ALL available data:
+        content: `You are analyzing a graduate program. Extract admission requirements from the provided information.
 
-SCHOOL INFORMATION:
-- School: ${schoolData.school_name}
-- Country/Region: ${schoolData.country_region}
-- QS Ranking: ${schoolData.qs_ranking}
+SCHOOL: ${schoolData.school_name}
+PROGRAM: ${schoolData.program_name} (${schoolData.degree_type})
+FIELD: ${schoolData.specific_field}
+RANKING: QS #${schoolData.qs_ranking}
 
-PROGRAM INFORMATION:
-- Program Name: ${schoolData.program_name}
-- Degree Type: ${schoolData.degree_type}
-- Duration: ${schoolData.duration}
-- Broad Category: ${schoolData.broad_category}
-- Specific Field: ${schoolData.specific_field}
+PROGRAM DETAILS:
+${schoolData.program_details || 'Limited program information available'}
 
-DETAILED PROGRAM INFORMATION:
-${schoolData.program_details || 'No detailed program information available'}
+LANGUAGE REQUIREMENTS:
+${schoolData.language_requirements || 'No specific language requirements listed'}
 
-EXISTING LANGUAGE REQUIREMENTS (if any):
-${schoolData.language_requirements || 'Not specified in database'}
-
-ADDITIONAL CONTEXT:
-- Program URL: ${schoolData.program_url || 'Not available'}
-- Graduate School URL: ${schoolData.graduate_school_url || 'Not available'}
-
-Based on ALL the above information, extract and return a JSON object with exactly these fields:
+Extract and return a JSON object with these fields:
 {
-  "tuition": "extracted/estimated tuition amount in USD format",
-  "gpa_requirement": "GPA requirement (e.g., '3.0+ GPA required' or 'No specific GPA requirement')",
-  "language_requirement": "Language test scores (e.g., 'TOEFL 90+ or IELTS 7.0+')",
-  "prerequisite_courses": "Required courses or academic background (e.g., 'Calculus I-III, Linear Algebra, Statistics')",
-  "degree_requirement": "Required degree background (e.g., 'Bachelor in Engineering or related field')",
-  "other_requirements": "Work experience, research experience, or other requirements"
+  "tuition": "Annual tuition cost (extract from text or estimate based on school ranking)",
+  "gpa_requirement": "Minimum GPA or academic requirements", 
+  "language_requirement": "TOEFL/IELTS scores required",
+  "prerequisite_courses": "Required academic background or specific courses",
+  "degree_requirement": "Required undergraduate degree type",
+  "other_requirements": "Additional requirements (GRE, work experience, etc.)"
 }
 
-IMPORTANT: 
-- EXTRACT SPECIFIC DETAILS from the program_details text above
-- For GPA: Look for GPA requirements, transcript requirements, or academic standing mentions
-- For prerequisites: Extract ALL specific courses mentioned (Calculus, Linear Algebra, Physics, etc.)
-- For language: Use the exact TOEFL/IELTS scores from language_requirements field
-- For degree: Extract specific degree requirements (Engineering, Science, etc.)
-- For other: Include GRE scores, work experience, research experience mentioned
-- NEVER use phrases like "No specific requirement", "Not specified", "Not mentioned"
-- ALWAYS extract concrete details from the program_details text
-- For GPA: If no GPA mentioned, extract transcript or academic performance requirements
-- For prerequisites: MUST extract specific course names from program_details
-- If absolutely no information exists, use "Information not available in source"`
+EXTRACTION RULES:
+1. For TUITION: Look for cost/fee information. If not found, estimate: Top 10 schools ~$60k, Top 50 ~$45k, Others ~$35k
+2. For GPA: Look for "GPA", "grade", "academic standing". If not found, use "3.0+ GPA typically required"
+3. For LANGUAGE: Use exact scores from language requirements. If not found, use "TOEFL 90+ or IELTS 7.0+"
+4. For PREREQUISITES: Look for specific courses, academic background. If CS program, assume "Strong quantitative background"
+5. For DEGREE: Look for degree requirements. Default to "Bachelor's degree required"
+6. For OTHER: Look for GRE, work experience, research. If not found, use "Strong academic record recommended"
+
+Be specific and helpful - avoid "Information not available" unless truly no relevant information exists.`
       }],
       response_format: { type: "json_object" }, // 强制 JSON 输出
       max_tokens: 600,
