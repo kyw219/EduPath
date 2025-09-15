@@ -329,7 +329,22 @@ function App() {
             
             // Get school recommendations
             const schools = await getSchools(analysisResponse.analysis_id);
-            setSchoolsData(schools);
+            
+            // 临时处理：从API返回中分离safe_schools数据
+            if (schools.safe_schools) {
+              // 如果API已经返回了分离的数据，直接使用
+              setSchoolsData(schools);
+            } else if (schools.target_schools && schools.target_schools.length > 6) {
+              // 如果target_schools包含了合并数据，需要分离
+              const enhancedSchools = {
+                ...schools,
+                safe_schools: schools.target_schools.slice(-3), // 最后3个作为safe choice
+                target_schools: schools.target_schools.slice(0, -3) // 前面的作为perfect match
+              };
+              setSchoolsData(enhancedSchools);
+            } else {
+              setSchoolsData(schools);
+            }
             
             // Get timeline
             const timeline = await getTimeline(analysisResponse.analysis_id);

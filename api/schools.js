@@ -350,14 +350,16 @@ export default async function handler(req, res) {
       }));
 
       // 更新数据库存储匹配结果
+      // 临时解决方案：将safe_schools合并到target_schools中，直到数据库schema更新
+      const combinedTargetSchools = [...targetSchools, ...safeSchools];
+      
       await connection.execute(`
         UPDATE user_sessions 
-        SET target_schools = ?, reach_schools = ?, safe_schools = ?
+        SET target_schools = ?, reach_schools = ?
         WHERE session_id = ?
       `, [
-        JSON.stringify(targetSchools),
+        JSON.stringify(combinedTargetSchools),
         JSON.stringify(reachSchools),
-        JSON.stringify(safeSchools),
         analysisId
       ]);
 
