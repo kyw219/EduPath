@@ -19,17 +19,9 @@ const dbConfig = {
 function cleanGPTResponse(response) {
   let cleaned = response.trim();
   
-  // 移除开头的 ```json 或 ```
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.substring(7);
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.substring(3);
-  }
-  
-  // 移除结尾的 ```
-  if (cleaned.endsWith('```')) {
-    cleaned = cleaned.substring(0, cleaned.length - 3);
-  }
+  // 更强力的清理 - 移除所有可能的markdown标记
+  cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/, '');
+  cleaned = cleaned.replace(/```\s*$/, '');
   
   return cleaned.trim();
 }
@@ -193,12 +185,9 @@ export default async function handler(req, res) {
       const userVector = userRows[0].profile_embedding;
       const userProfile = userRows[0].user_profile;
       
-      console.log('📝 原始用户档案文本:', userProfile);
-      
       // 提取用户偏好的国家
       const preferredCountries = getStandardCountryNames(userProfile);
       console.log('🌍 用户偏好国家:', preferredCountries);
-      console.log('🔍 国家过滤是否启用:', preferredCountries.length > 0);
 
       console.log('🔄 执行向量搜索...');
 
