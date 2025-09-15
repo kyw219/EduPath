@@ -105,7 +105,7 @@ const QualificationStatus: React.FC<QualificationStatusProps> = ({ school, userP
 
   return (
     <div className="bg-slate-800/50 rounded-lg p-4 h-full">
-      <h4 className="text-slate-200 text-base font-bold mb-4 border-b border-slate-600 pb-2">
+      <h4 className="text-slate-200 text-base font-bold mb-4 border-b border-slate-600 pb-2 text-center">
         Status
       </h4>
       

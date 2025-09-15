@@ -137,7 +137,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
         {/* Middle Column - Program Details */}
         <div className="col-span-3">
           <div className="bg-slate-800/50 rounded-lg p-4 h-full">
-            <h4 className="text-slate-200 text-base font-bold mb-4 border-b border-slate-600 pb-2">
+            <h4 className="text-slate-200 text-base font-bold mb-4 border-b border-slate-600 pb-2 text-center">
               Program Details
             </h4>
             
@@ -197,7 +197,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
         {/* Right Column - Admission Requirements */}
         <div className="col-span-4">
           <div className="bg-slate-800/50 rounded-lg p-4 h-full">
-            <h4 className="text-slate-200 text-base font-bold mb-4 border-b border-slate-600 pb-2">
+            <h4 className="text-slate-200 text-base font-bold mb-4 border-b border-slate-600 pb-2 text-center">
               Admission Requirements
             </h4>
             

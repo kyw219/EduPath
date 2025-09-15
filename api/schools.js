@@ -305,19 +305,35 @@ export default async function handler(req, res) {
         const dreamSchools = [];
         const targetSchools = [];
         const safeChoice = [];
-        const usedSchools = new Set();
+        const usedPrograms = new Set(); // 改为使用 学校+项目 组合作为键
+        
+        // 预处理：去重相同的学校+项目组合，保留相似度最高的
+        const uniquePrograms = new Map();
+        candidates.forEach(school => {
+          const programKey = `${school.school_name}|${school.program_name}`;
+          if (!uniquePrograms.has(programKey) || school.similarity < uniquePrograms.get(programKey).similarity) {
+            uniquePrograms.set(programKey, school);
+          }
+        });
+        const uniqueCandidates = Array.from(uniquePrograms.values());
+        
+        console.log(`🔧 去重前: ${candidates.length} 个候选，去重后: ${uniqueCandidates.length} 个唯一项目`);
         
         // 第一步：Dream Schools - 强制选择 Top 30 排名的学校（不管相似度）
-        const top30Schools = candidates.filter(school => school.qs_ranking <= 30);
+        const top30Schools = uniqueCandidates.filter(school => school.qs_ranking <= 30);
         top30Schools.forEach(school => {
-          if (dreamSchools.length < 4) {
+          const programKey = `${school.school_name}|${school.program_name}`;
+          if (dreamSchools.length < 4 && !usedPrograms.has(programKey)) {
             dreamSchools.push(school);
-            usedSchools.add(school.school_name);
+            usedPrograms.add(programKey);
           }
         });
         
-        // 第二步：获取剩余学校，按相似度排序（相似度越小越好）
-        const remainingSchools = candidates.filter(school => !usedSchools.has(school.school_name));
+        // 第二步：获取剩余学校项目，按相似度排序（相似度越小越好）
+        const remainingSchools = uniqueCandidates.filter(school => {
+          const programKey = `${school.school_name}|${school.program_name}`;
+          return !usedPrograms.has(programKey);
+        });
         const sortedByMatch = remainingSchools.sort((a, b) => a.similarity - b.similarity);
         
         // 第三步：动态划分 Safe 和 Target
@@ -327,14 +343,16 @@ export default async function handler(req, res) {
         
         // Safe Schools: 相似度最高的前30%
         for (let i = 0; i < safeCount && i < sortedByMatch.length; i++) {
+          const programKey = `${sortedByMatch[i].school_name}|${sortedByMatch[i].program_name}`;
           safeChoice.push(sortedByMatch[i]);
-          usedSchools.add(sortedByMatch[i].school_name);
+          usedPrograms.add(programKey);
         }
         
-        // Target Schools: 剩余的学校
+        // Target Schools: 剩余的学校项目
         for (let i = safeCount; i < safeCount + targetCount && i < sortedByMatch.length; i++) {
+          const programKey = `${sortedByMatch[i].school_name}|${sortedByMatch[i].program_name}`;
           targetSchools.push(sortedByMatch[i]);
-          usedSchools.add(sortedByMatch[i].school_name);
+          usedPrograms.add(programKey);
         }
         
         return { dreamSchools, targetSchools, safeChoice };
