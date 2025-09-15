@@ -66,12 +66,7 @@ Please share all this information at once!`
             // 发送完成消息
             setMessages(prev => [...prev, {
               role: 'assistant',
-              content: `✅ Analysis complete! I found ${schools.target_schools.length} target schools and ${schools.reach_schools.length} reach schools for you.
-
-📚 View school recommendations → Click 'Target Schools' and 'Reach Schools' on the left
-📅 View your personalized timeline → Click 'Timeline' on the left
-
-All recommendations are tailored specifically to your background!`
+              content: `Analysis complete! You can now view your analysis results.`
             }]);
 
             // 自动跳转到结果页面

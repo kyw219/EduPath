@@ -96,50 +96,85 @@ Please extract information and return in JSON format.`;
     
     // 如果是第一条消息，显示欢迎信息
     if (messages.length === 1 && messages[0].role === 'user') {
-      aiReply = `Hello! I'm here to help you find the perfect graduate programs. 🎓
+      aiReply = `Hi! Welcome to EduPath AI! 👋
 
-Please tell me about:
+I need these details to recommend the best schools for you:
 
-🎓 **Your Background:**
-• Current major/field of study
-• GPA or average grade
+1. What's your current major/background?
+2. What graduate program are you targeting?
+3. What's your GPA or average grade?
+4. Do you have TOEFL/IELTS scores?
+5. Which countries interest you for studying?
 
-🎯 **Your Goals:**  
-• Target graduate field
-• Preferred countries (US, UK, Canada, etc.)
+The more detailed your information, the more precise my recommendations will be 🎯
 
-📝 **Language Tests:**
-• TOEFL/IELTS score (or if you plan to take one)
-
-Share all these details in your next message, and I'll find the best programs for you! ✨`;
+Please share all this information at once!`;
     } else if (extractedData.has_sufficient_info) {
-      aiReply = `Perfect! I have all the information I need. Analyzing the best programs for you...
-
-🔄 Analyzing your academic background...
-🔄 Matching the most suitable schools and programs...
-🔄 Generating personalized application timeline...`;
+      // 构建信息确认
+      let confirmation = "Perfect! I have all the information I need:\n";
+      if (extractedData.current_major) confirmation += `- Current major: ${extractedData.current_major}\n`;
+      if (extractedData.target_field) confirmation += `- Target program: ${extractedData.target_field}\n`;
+      if (extractedData.gpa_score) confirmation += `- GPA: ${extractedData.gpa_score}\n`;
+      if (extractedData.language_test) confirmation += `- Language test: ${extractedData.language_test}\n`;
+      if (extractedData.preferred_countries && extractedData.preferred_countries.length > 0) {
+        confirmation += `- Preferred countries: ${extractedData.preferred_countries.join(', ')}\n`;
+      }
+      
+      aiReply = confirmation + "\nNow starting to analyze schools suitable for you.";
     } else {
+      // 构建已获得信息的确认
+      let confirmation = "";
+      if (extractedData.current_major && extractedData.target_field) {
+        confirmation = `Got it! Your current major is ${extractedData.current_major} and you're targeting ${extractedData.target_field} programs.\n\n`;
+      } else if (extractedData.current_major) {
+        confirmation = `Got it! Your current major is ${extractedData.current_major}.\n\n`;
+      } else if (extractedData.target_field) {
+        confirmation = `Got it! You're targeting ${extractedData.target_field} programs.\n\n`;
+      }
+      
+      // 添加已有的其他信息
+      if (extractedData.gpa_score) {
+        confirmation += `Your GPA is ${extractedData.gpa_score}. `;
+      }
+      if (extractedData.language_test) {
+        confirmation += `Your language test score is ${extractedData.language_test}. `;
+      }
+      if (extractedData.preferred_countries && extractedData.preferred_countries.length > 0) {
+        confirmation += `You're interested in studying in ${extractedData.preferred_countries.join(', ')}. `;
+      }
+      if (confirmation.includes('Your GPA') || confirmation.includes('Your language') || confirmation.includes('You\'re interested')) {
+        confirmation += "\n\n";
+      }
+      
       // 智能追问缺失信息
       const missing = extractedData.missing_info || [];
-      aiReply = "Thanks for the information! I just need a few more details:\n\n";
+      let followUp = "I still need a few more details:\n\n";
+      let questionNumber = 1;
       
       if (missing.includes('current_major')) {
-        aiReply += "🎓 What's your current major/field of study?\n";
+        followUp += `${questionNumber}. What's your current major/background?\n`;
+        questionNumber++;
       }
       if (missing.includes('target_field')) {
-        aiReply += "🎯 Which field do you want to study in graduate school?\n";
+        followUp += `${questionNumber}. What graduate program are you targeting?\n`;
+        questionNumber++;
       }
       if (missing.includes('gpa_score')) {
-        aiReply += "📊 What's your GPA or average grade?\n";
-      }
-      if (missing.includes('preferred_countries')) {
-        aiReply += "🌍 Which countries interest you for studying?\n";
+        followUp += `${questionNumber}. What's your GPA or average grade?\n`;
+        questionNumber++;
       }
       if (missing.includes('language_test')) {
-        aiReply += "📝 Do you have TOEFL/IELTS scores or plan to take one?\n";
+        followUp += `${questionNumber}. Do you have TOEFL/IELTS scores?\n`;
+        questionNumber++;
+      }
+      if (missing.includes('preferred_countries')) {
+        followUp += `${questionNumber}. Which countries interest you for studying?\n`;
+        questionNumber++;
       }
       
-      aiReply += "\nOnce I have these details, I can give you perfect recommendations! 😊";
+      followUp += "\nOnce I have these details, I can give you perfect recommendations! 😊";
+      
+      aiReply = confirmation + followUp;
     }
 
     res.status(200).json({
