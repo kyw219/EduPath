@@ -22,8 +22,8 @@ const Home: React.FC<HomeProps> = ({ onStartAnalysis }) => {
           </h1>
           
           <p className="text-xl text-slate-400 mb-8 leading-relaxed">
-            Get personalized school recommendations powered by advanced AI.<br />
-            Join thousands of students who found their perfect academic match.
+            No more wondering 'Will I get in?' Know before you apply.<br />
+            From overwhelmed to confident in one conversation.
           </p>
           
           <button 
