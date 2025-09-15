@@ -1,14 +1,15 @@
 import React from 'react';
-import { School } from '../types';
+import { School, UserProfile } from '../types';
 import SchoolCard from './SchoolCard';
 
 interface TargetSchoolsProps {
   schools: School[];
   onTogglePlan: (school: School) => void;
   schoolsInPlan: Set<string>;
+  userProfile?: UserProfile | null;
 }
 
-const TargetSchools: React.FC<TargetSchoolsProps> = ({ schools, onTogglePlan, schoolsInPlan }) => {
+const TargetSchools: React.FC<TargetSchoolsProps> = ({ schools, onTogglePlan, schoolsInPlan, userProfile }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center">
@@ -26,6 +27,7 @@ const TargetSchools: React.FC<TargetSchoolsProps> = ({ schools, onTogglePlan, sc
             type="target"
             onTogglePlan={onTogglePlan}
             schoolsInPlan={schoolsInPlan}
+            userProfile={userProfile}
           />
         ))}
       </div>

@@ -1,21 +1,17 @@
 import React from 'react';
-import { School } from '../types';
+import { School, UserProfile } from '../types';
+import QualificationStatus from './QualificationStatus';
 
 interface SchoolCardProps {
   school: School;
   type: 'target' | 'reach' | 'safe';
   onTogglePlan?: (school: School) => void;
   schoolsInPlan?: Set<string>;
+  userProfile?: UserProfile | null;
 }
 
-interface QualificationItem {
-  name: string;
-  status: 'met' | 'partial' | 'not_met';
-  userValue?: string;
-  requiredValue: string;
-}
 
-const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, schoolsInPlan }) => {
+const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, schoolsInPlan, userProfile }) => {
 
   // Generate school abbreviation
   const getSchoolAbbreviation = (schoolName: string) => {
@@ -58,67 +54,6 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
     return `Master of Science in ${program}`;
   };
 
-  // Simple status calculation function
-  const calculateStatus = (requirement: string): QualificationItem['status'] => {
-    if (!requirement || requirement.toLowerCase().includes('not required') || requirement.toLowerCase().includes('not specified')) {
-      return 'met';
-    }
-    if (requirement.toLowerCase().includes('preferred') || requirement.toLowerCase().includes('recommended')) {
-      return 'partial';
-    }
-    return 'not_met'; // Default requires meeting
-  };
-
-  // Qualification data matching Admission Requirements order
-  const qualificationData: QualificationItem[] = [
-    {
-      name: 'GPA',
-      status: calculateStatus(school.gpa_requirement),
-      requiredValue: school.gpa_requirement
-    },
-    {
-      name: 'Language Score',
-      status: calculateStatus(school.language_requirement),
-      requiredValue: school.language_requirement
-    },
-    {
-      name: 'Prerequisites',
-      status: calculateStatus(school.prerequisite_courses),
-      requiredValue: school.prerequisite_courses
-    },
-    {
-      name: 'Degree Requirement',
-      status: calculateStatus(school.degree_requirement),
-      requiredValue: school.degree_requirement
-    },
-    {
-      name: 'Other Requirements',
-      status: calculateStatus(school.other_requirements),
-      requiredValue: school.other_requirements
-    }
-  ];
-
-  // Get qualification status indicator
-  const getQualificationIndicator = (status: QualificationItem['status']) => {
-    const baseClasses = 'w-4 h-4 rounded-full border-2 flex items-center justify-center';
-    
-    switch (status) {
-      case 'met':
-        return (
-          <div className={`${baseClasses} bg-green-500 border-green-500`}>
-            <div className="w-2 h-2 bg-white rounded-full"></div>
-          </div>
-        );
-      case 'partial':
-        return (
-          <div className={`${baseClasses} bg-gradient-to-r from-green-500 to-transparent border-green-500`}>
-            <div className="w-1 h-2 bg-white rounded-full"></div>
-          </div>
-        );
-      case 'not_met':
-        return <div className={`${baseClasses} border-red-500 bg-transparent`}></div>;
-    }
-  };
 
   return (
     <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 hover:border-slate-600 transition-colors">
@@ -307,25 +242,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
 
         {/* Far Right Column - Qualification Status */}
         <div className="col-span-3">
-          <div className="bg-slate-800/50 rounded-lg p-4 h-full">
-            <h4 className="text-slate-200 text-base font-bold mb-4 border-b border-slate-600 pb-2">
-              Qualification Status
-            </h4>
-            
-            <div className="space-y-3">
-              {qualificationData.map((item, index) => (
-                <div key={index}>
-                  <label className="text-slate-400 text-xs font-medium">{item.name}</label>
-                  <div className="mt-1 p-2 bg-slate-700 rounded border border-slate-600 flex items-center justify-between">
-                    <span className="text-slate-300 text-sm">{item.requiredValue}</span>
-                    <div className="ml-3 flex-shrink-0">
-                      {getQualificationIndicator(item.status)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <QualificationStatus school={school} userProfile={userProfile} />
         </div>
 
       </div>

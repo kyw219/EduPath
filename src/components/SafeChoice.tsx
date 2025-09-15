@@ -1,14 +1,15 @@
 import React from 'react';
-import { School } from '../types';
+import { School, UserProfile } from '../types';
 import SchoolCard from './SchoolCard';
 
 interface SafeChoiceProps {
   schools: School[];
   onTogglePlan: (school: School) => void;
   schoolsInPlan: Set<string>;
+  userProfile?: UserProfile | null;
 }
 
-const SafeChoice: React.FC<SafeChoiceProps> = ({ schools, onTogglePlan, schoolsInPlan }) => {
+const SafeChoice: React.FC<SafeChoiceProps> = ({ schools, onTogglePlan, schoolsInPlan, userProfile }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center">
@@ -26,6 +27,7 @@ const SafeChoice: React.FC<SafeChoiceProps> = ({ schools, onTogglePlan, schoolsI
             type="safe"
             onTogglePlan={onTogglePlan}
             schoolsInPlan={schoolsInPlan}
+            userProfile={userProfile}
           />
         ))}
       </div>

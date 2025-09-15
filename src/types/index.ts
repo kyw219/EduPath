@@ -62,3 +62,14 @@ export interface TimelineResponse {
   total_tasks: number;
   completion_rate: number;
 }
+
+// 简单的用户档案接口
+export interface UserProfile {
+  name: string;
+  gpa: number;
+  toefl?: number;
+  ielts?: number;
+  background: string[];
+  degree: string;
+  experience: string[];
+}

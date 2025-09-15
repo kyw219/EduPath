@@ -7,7 +7,7 @@ import TargetSchools from './components/TargetSchools';
 import DreamSchools from './components/ReachSchools';
 import SafeChoice from './components/SafeChoice';
 import Timeline from './components/Timeline';
-import { ChatMessage, SchoolsResponse, TimelineResponse } from './types';
+import { ChatMessage, SchoolsResponse, TimelineResponse, UserProfile } from './types';
 import { intelligentChat, analyzeChat, getSchools, getTimeline } from './api/realApi';
 
 function App() {
@@ -19,6 +19,31 @@ function App() {
   const [timelineData, setTimelineData] = useState<TimelineResponse | null>(null);
   const [showChat, setShowChat] = useState(true);
   const [schoolsInPlan, setSchoolsInPlan] = useState<Set<string>>(new Set());
+  
+  // 用户档案状态
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+
+  // 预定义的测试用户档案
+  const testProfiles: UserProfile[] = [
+    {
+      name: "高分学生 Alex",
+      gpa: 3.8,
+      toefl: 105,
+      ielts: 7.5,
+      background: ["Python", "Java", "Data Structures", "Algorithms", "Machine Learning", "Discrete Mathematics"],
+      degree: "Computer Science",
+      experience: ["Software Development", "Research", "Internship"]
+    },
+    {
+      name: "普通学生 Jordan", 
+      gpa: 3.2,
+      toefl: 85,
+      ielts: 6.0,
+      background: ["Python", "Basic Programming", "Mathematics"],
+      degree: "Information Systems",
+      experience: ["Course Projects"]
+    }
+  ];
 
   // Handle adding/removing school to/from plan
   const handleTogglePlan = (school: any) => {
@@ -406,7 +431,7 @@ function App() {
             </div>
           );
         }
-        return <TargetSchools schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
+        return <TargetSchools schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} userProfile={currentUserProfile} />;
       case 'reach':
         if (!schoolsData) {
           return (
@@ -427,7 +452,7 @@ function App() {
             </div>
           );
         }
-        return <DreamSchools schools={schoolsData.reach_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
+        return <DreamSchools schools={schoolsData.reach_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} userProfile={currentUserProfile} />;
       case 'safe':
         if (!schoolsData || !schoolsData.safe_schools) {
           return (
@@ -448,7 +473,7 @@ function App() {
             </div>
           );
         }
-        return <SafeChoice schools={schoolsData.safe_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} />;
+        return <SafeChoice schools={schoolsData.safe_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} userProfile={currentUserProfile} />;
       case 'timeline':
         if (!timelineData) {
           return (
@@ -477,9 +502,38 @@ function App() {
       />
       
       <div className="flex-1 flex">
-        {/* Top Bar with Chat Toggle */}
+        {/* Top Bar with Controls */}
         <div className="flex-1 flex flex-col">
-          <div className="flex justify-end p-4 flex-shrink-0">
+          <div className="flex justify-between items-center p-4 flex-shrink-0">
+            {/* User Profile Switcher */}
+            <div className="flex items-center space-x-2">
+              <span className="text-slate-400 text-sm">测试用户:</span>
+              {testProfiles.map((profile, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentUserProfile(profile)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    currentUserProfile?.name === profile.name
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                >
+                  {profile.name}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentUserProfile(null)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  !currentUserProfile
+                    ? 'bg-gray-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                无档案
+              </button>
+            </div>
+
+            {/* Chat Toggle */}
             <button
               onClick={() => setShowChat(!showChat)}
               className={`p-3 rounded-full transition-colors ${
