@@ -82,17 +82,6 @@ const Home: React.FC<HomeProps> = ({ onStartAnalysis }) => {
           </div>
         </div>
 
-        {/* Trust Indicators */}
-        <div className="mt-16 pt-8 border-t border-slate-700/50">
-          <p className="text-slate-500 text-sm mb-4">Trusted by students from</p>
-          <div className="flex justify-center items-center space-x-8 text-slate-600">
-            <span className="font-semibold">MIT</span>
-            <span className="font-semibold">Stanford</span>
-            <span className="font-semibold">Harvard</span>
-            <span className="font-semibold">Oxford</span>
-            <span className="font-semibold">Cambridge</span>
-          </div>
-        </div>
       </div>
     </div>
   );
