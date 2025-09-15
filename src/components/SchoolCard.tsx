@@ -28,14 +28,14 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
       .toUpperCase();
   };
 
-  // Get compatibility score color
+  // Get match score color
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-400';
     if (score >= 60) return 'text-yellow-400';
     return 'text-orange-400';
   };
 
-  // Get compatibility score ring color
+  // Get match score ring color
   const getScoreRingColor = (score: number) => {
     if (score >= 80) return '#10B981'; // green
     if (score >= 60) return '#F59E0B'; // yellow
@@ -152,7 +152,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
             {getFullProgramName(school.program)}
           </p>
 
-          {/* Compatibility Score - Enlarged */}
+          {/* Match Score - Enlarged */}
           <div className="flex flex-col items-center">
             <div className="relative w-20 h-20 mb-3">
               {/* Background circle */}
@@ -171,7 +171,7 @@ const SchoolCard: React.FC<SchoolCardProps> = ({ school, type, onTogglePlan, sch
                 </span>
               </div>
             </div>
-            <p className="text-slate-400 text-sm font-medium mb-4">Compatibility Score</p>
+            <p className="text-slate-400 text-sm font-medium mb-4">Match Score</p>
             
             {/* Add/Remove Plan Button */}
             {(() => {

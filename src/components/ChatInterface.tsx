@@ -2,6 +2,61 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, X } from 'lucide-react';
 import { ChatMessage } from '../types';
 
+// 串行加载步骤组件
+const SequentialLoader: React.FC = () => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+
+  const steps = [
+    { text: "Analyzing your academic background...", color: "border-blue-400" },
+    { text: "Matching the most suitable schools and programs...", color: "border-purple-400" },
+    { text: "Generating personalized application timeline...", color: "border-green-400" }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentStep(prev => {
+        if (prev < steps.length - 1) {
+          setCompletedSteps(current => [...current, prev]);
+          return prev + 1;
+        } else {
+          // 最后一步也标记为完成
+          if (!completedSteps.includes(prev)) {
+            setCompletedSteps(current => [...current, prev]);
+          }
+          return prev;
+        }
+      });
+    }, 2000); // 每2秒切换到下一步
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="text-xs text-slate-300 space-y-2">
+      {steps.map((step, index) => (
+        <div key={index} className="flex items-center justify-center space-x-2">
+          {completedSteps.includes(index) ? (
+            // 已完成的步骤显示绿色对勾
+            <div className="w-3 h-3 rounded-full bg-green-400 flex items-center justify-center">
+              <span className="text-white text-xs">✓</span>
+            </div>
+          ) : currentStep === index ? (
+            // 当前步骤显示旋转动画
+            <div className={`animate-spin w-3 h-3 border-2 ${step.color} border-t-transparent rounded-full`}></div>
+          ) : (
+            // 未开始的步骤显示灰色圆点
+            <div className="w-3 h-3 rounded-full bg-slate-600"></div>
+          )}
+          <span className={completedSteps.includes(index) ? "text-green-400" : currentStep === index ? "text-white" : "text-slate-500"}>
+            {step.text}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 interface ChatInterfaceProps {
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
@@ -104,25 +159,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ messages, onSendMessage, 
         {isAnalyzing && (
           <div className="flex justify-center">
             <div className="bg-slate-600 rounded-lg px-4 py-3 text-slate-200 text-sm max-w-sm">
-              <div className="text-center space-y-2">
+              <div className="text-center space-y-3">
                 <div className="flex items-center justify-center space-x-2">
                   <div className="animate-spin w-4 h-4 border-2 border-teal-400 border-t-transparent rounded-full"></div>
                   <span className="font-medium">Analyzing the best programs for you...</span>
                 </div>
-                <div className="text-xs text-slate-300 space-y-1">
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full"></div>
-                    <span>Analyzing your academic background...</span>
-                  </div>
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full"></div>
-                    <span>Matching the most suitable schools and programs...</span>
-                  </div>
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="animate-spin w-3 h-3 border-2 border-green-400 border-t-transparent rounded-full"></div>
-                    <span>Generating personalized application timeline...</span>
-                  </div>
-                </div>
+                <SequentialLoader />
               </div>
             </div>
           </div>
