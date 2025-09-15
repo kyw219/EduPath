@@ -20,30 +20,82 @@ function App() {
   const [showChat, setShowChat] = useState(true);
   const [schoolsInPlan, setSchoolsInPlan] = useState<Set<string>>(new Set());
   
-  // 用户档案状态
-  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+  // 用户档案状态 - 从聊天中提取
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // 预定义的测试用户档案
-  const testProfiles: UserProfile[] = [
-    {
-      name: "高分学生 Alex",
-      gpa: 3.8,
-      toefl: 105,
-      ielts: 7.5,
-      background: ["Python", "Java", "Data Structures", "Algorithms", "Machine Learning", "Discrete Mathematics"],
-      degree: "Computer Science",
-      experience: ["Software Development", "Research", "Internship"]
-    },
-    {
-      name: "普通学生 Jordan", 
-      gpa: 3.2,
-      toefl: 85,
-      ielts: 6.0,
-      background: ["Python", "Basic Programming", "Mathematics"],
-      degree: "Information Systems",
-      experience: ["Course Projects"]
+  // 从聊天响应中提取用户档案信息
+  const extractUserProfileFromChatResponse = (extractedProfile: any): UserProfile => {
+    // 提取GPA
+    let gpa = 0;
+    if (extractedProfile.gpa_score) {
+      const gpaMatch = extractedProfile.gpa_score.match(/(\d+\.?\d*)/);
+      if (gpaMatch) {
+        gpa = parseFloat(gpaMatch[1]);
+      }
     }
-  ];
+
+    // 提取语言成绩
+    let toefl: number | undefined;
+    let ielts: number | undefined;
+    if (extractedProfile.language_test) {
+      const toeflMatch = extractedProfile.language_test.match(/toefl[^0-9]*(\d+)/i);
+      const ieltsMatch = extractedProfile.language_test.match(/ielts[^0-9]*(\d+\.?\d*)/i);
+      
+      if (toeflMatch) {
+        toefl = parseInt(toeflMatch[1]);
+      }
+      if (ieltsMatch) {
+        ielts = parseFloat(ieltsMatch[1]);
+      }
+    }
+
+    // 提取背景信息
+    const background: string[] = [];
+    if (extractedProfile.current_major) {
+      background.push(extractedProfile.current_major);
+    }
+    if (extractedProfile.additional_info) {
+      // 从附加信息中提取技能关键词
+      const skillKeywords = ['python', 'java', 'c++', 'javascript', 'programming', 'data structures', 'algorithms', 'machine learning', 'statistics', 'mathematics'];
+      const additionalInfo = extractedProfile.additional_info.toLowerCase();
+      skillKeywords.forEach(skill => {
+        if (additionalInfo.includes(skill)) {
+          background.push(skill.charAt(0).toUpperCase() + skill.slice(1));
+        }
+      });
+    }
+
+    // 提取经验信息
+    const experience: string[] = [];
+    if (extractedProfile.additional_info) {
+      const additionalInfo = extractedProfile.additional_info.toLowerCase();
+      if (additionalInfo.includes('internship') || additionalInfo.includes('intern')) {
+        experience.push('Internship');
+      }
+      if (additionalInfo.includes('research')) {
+        experience.push('Research');
+      }
+      if (additionalInfo.includes('work') || additionalInfo.includes('job')) {
+        experience.push('Work Experience');
+      }
+      if (additionalInfo.includes('project')) {
+        experience.push('Course Projects');
+      }
+      if (experience.length === 0) {
+        experience.push('Academic Background');
+      }
+    }
+
+    return {
+      name: 'User',
+      gpa: gpa,
+      toefl: toefl,
+      ielts: ielts,
+      background: background.length > 0 ? background : ['General Background'],
+      degree: extractedProfile.current_major || 'Bachelor\'s Degree',
+      experience: experience
+    };
+  };
 
   // Handle adding/removing school to/from plan
   const handleTogglePlan = (school: any) => {
@@ -355,6 +407,16 @@ function App() {
             // Get school recommendations
             const schools = await getSchools(analysisResponse.analysis_id);
             
+            // 从用户档案中提取信息用于资格评估
+            try {
+              const extractedProfile = extractUserProfileFromChatResponse(chatResponse.extractedProfile);
+              setUserProfile(extractedProfile);
+              console.log('✅ 用户资料提取成功:', extractedProfile);
+            } catch (error) {
+              console.error('❌ 用户资料提取失败:', error);
+              // 即使提取失败也继续，只是不会有智能评估
+            }
+            
             // 临时处理：从API返回中分离safe_schools数据
             if (schools.safe_schools) {
               // 如果API已经返回了分离的数据，直接使用
@@ -431,7 +493,7 @@ function App() {
             </div>
           );
         }
-        return <TargetSchools schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} userProfile={currentUserProfile} />;
+        return <TargetSchools schools={schoolsData.target_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} userProfile={userProfile} />;
       case 'reach':
         if (!schoolsData) {
           return (
@@ -452,7 +514,7 @@ function App() {
             </div>
           );
         }
-        return <DreamSchools schools={schoolsData.reach_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} userProfile={currentUserProfile} />;
+        return <DreamSchools schools={schoolsData.reach_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} userProfile={userProfile} />;
       case 'safe':
         if (!schoolsData || !schoolsData.safe_schools) {
           return (
@@ -473,7 +535,7 @@ function App() {
             </div>
           );
         }
-        return <SafeChoice schools={schoolsData.safe_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} userProfile={currentUserProfile} />;
+        return <SafeChoice schools={schoolsData.safe_schools} onTogglePlan={handleTogglePlan} schoolsInPlan={schoolsInPlan} userProfile={userProfile} />;
       case 'timeline':
         if (!timelineData) {
           return (
@@ -502,38 +564,9 @@ function App() {
       />
       
       <div className="flex-1 flex">
-        {/* Top Bar with Controls */}
+        {/* Top Bar with Chat Toggle */}
         <div className="flex-1 flex flex-col">
-          <div className="flex justify-between items-center p-4 flex-shrink-0">
-            {/* User Profile Switcher */}
-            <div className="flex items-center space-x-2">
-              <span className="text-slate-400 text-sm">测试用户:</span>
-              {testProfiles.map((profile, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentUserProfile(profile)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    currentUserProfile?.name === profile.name
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
-                >
-                  {profile.name}
-                </button>
-              ))}
-              <button
-                onClick={() => setCurrentUserProfile(null)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  !currentUserProfile
-                    ? 'bg-gray-600 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                无档案
-              </button>
-            </div>
-
-            {/* Chat Toggle */}
+          <div className="flex justify-end p-4 flex-shrink-0">
             <button
               onClick={() => setShowChat(!showChat)}
               className={`p-3 rounded-full transition-colors ${
