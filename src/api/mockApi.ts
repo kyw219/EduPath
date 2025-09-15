@@ -11,20 +11,26 @@ const mockSchoolsData: SchoolsResponse = {
       program: "MS Computer Science", 
       match_score: 88,
       deadline: "2025-01-15",
-      requirements: "No programming prereq required",
       tuition: "$43,000",
-      employment_rate: "92%",
-      reason: "Perfect for career changers, West Coast location"
+      duration: "2 years",
+      gpa_requirement: "3.0+ GPA required",
+      language_requirement: "TOEFL 90+ or IELTS 7.0+",
+      prerequisite_courses: "Basic programming knowledge",
+      degree_requirement: "Bachelor's degree required",
+      other_requirements: "No programming prereq required"
     },
     {
       school: "Cal State Long Beach",
       program: "MS Computer Science",
       match_score: 85,
       deadline: "2025-02-01", 
-      requirements: "Basic math background sufficient",
       tuition: "$18,000",
-      employment_rate: "89%",
-      reason: "Budget-friendly, strong industry connections"
+      duration: "2 years",
+      gpa_requirement: "2.8+ GPA required",
+      language_requirement: "TOEFL 85+ or IELTS 6.5+",
+      prerequisite_courses: "Basic math background",
+      degree_requirement: "Bachelor's degree required",
+      other_requirements: "Strong academic background"
     }
   ],
   reach_schools: [
@@ -36,9 +42,12 @@ const mockSchoolsData: SchoolsResponse = {
       suggestions: "Complete UC Berkeley Extension programming sequence",
       deadline: "2025-12-01",
       tuition: "$77,000",
-      requirements: "Strong math and programming background",
-      employment_rate: "98%",
-      reason: "Top-tier program, extensive industry connections"
+      duration: "2 years",
+      gpa_requirement: "3.7+ GPA required",
+      language_requirement: "TOEFL 105+ or IELTS 7.5+",
+      prerequisite_courses: "Strong math and programming background",
+      degree_requirement: "Bachelor's in Engineering or CS",
+      other_requirements: "Research experience preferred"
     },
     {
       school: "UC Berkeley", 
@@ -48,9 +57,12 @@ const mockSchoolsData: SchoolsResponse = {
       suggestions: "Take Berkeley Extension courses + coding bootcamp",
       deadline: "2025-11-30",
       tuition: "$65,000",
-      requirements: "Technical background required",
-      employment_rate: "95%",
-      reason: "Excellent reputation, Silicon Valley location"
+      duration: "1.5 years",
+      gpa_requirement: "3.5+ GPA required",
+      language_requirement: "TOEFL 100+ or IELTS 7.0+",
+      prerequisite_courses: "Linear Algebra, Discrete Math, Programming",
+      degree_requirement: "Technical background required",
+      other_requirements: "Work experience preferred"
     }
   ]
 };
