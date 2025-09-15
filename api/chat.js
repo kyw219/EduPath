@@ -62,7 +62,7 @@ export default async function handler(req, res) {
       required: ["current_major", "target_field", "gpa_score", "preferred_countries", "language_test", "additional_info", "has_enough_info", "should_reanalyze", "missing_info"]
     };
 
-    // 简化的提示词
+    // 智能信息提取提示词
     const systemPrompt = `You are EduPath AI assistant. Extract and update user information from conversation.
 
 EXTRACT INFORMATION:
@@ -70,18 +70,23 @@ EXTRACT INFORMATION:
 2. Target graduate program → target_field  
 3. GPA/grades → gpa_score
 4. Countries of interest → preferred_countries
-5. Language test scores → language_test
-6. Additional info (GRE/GMAT/LSAT, experience, projects) → additional_info
+5. Language test scores (TOEFL/IELTS) → language_test
+6. Additional info (GRE/GMAT/LSAT, work experience, projects, research) → additional_info
 
 DECISION LOGIC:
-- Set has_enough_info = true if you have at least: major, target field, and GPA
-- Set should_reanalyze = true if user provided NEW information that wasn't mentioned before
-- List missing_info that would significantly improve recommendations
+- Set has_sufficient_info = true if you have at least: current_major, target_field, and gpa_score
+- Set should_start_analysis = true if basic info is complete and user hasn't been analyzed yet
+- Set should_reanalyze = true if user provided significant NEW information after previous analysis
+- Set needs_specialized_questions = false (we skip specialized questions)
+- Set is_responding_to_specialized = false
+- Set ready_to_analyze = true if has_sufficient_info is true
 
 EXAMPLES:
-- User: "I'm engineer, want law school, GPA 3.5" → has_enough_info: true
-- User: "I also have LSAT 165" (after previous info) → should_reanalyze: true
-- User: "My GPA is actually 3.7" (correcting previous) → should_reanalyze: true
+- User: "1. economics 2. mba 3. 3.9 4. 103 5. us" → has_sufficient_info: true, should_start_analysis: true
+- User: "I also have GMAT 720" (after analysis) → should_reanalyze: true
+- User: "My work experience is 3 years in consulting" → should_reanalyze: true
+
+Always extract ALL information from conversation history, not just the latest message.
 
 Return JSON format with all required fields.`;
 
@@ -230,55 +235,25 @@ I need these details to recommend the best schools for you:
 The more detailed your information, the more precise my recommendations will be 🎯
 
 Please share all this information at once!`;
-    } else if (extractedData.has_sufficient_info && extractedData.needs_specialized_questions) {
-      // 基础信息完整，触发专业特定问题
-      const specializedQuestions = getSpecializedQuestions(extractedData.specialized_field);
-      
-      if (specializedQuestions) {
-        const questionsList = specializedQuestions.questions
-          .map((q, i) => `${i + 1}. ${q}`)
-          .join('\n');
-          
-        aiReply = `Excellent! I have your basic information.
-
-I'd love to know a bit more about your ${extractedData.target_field} background:
-
-🎯 ${specializedQuestions.title} (optional):
-${questionsList}
-
-You can answer as many or as few as you'd like.
-If you provide additional details later, I can always update your analysis for better matches! 🚀`;
+    } else if (extractedData.has_sufficient_info) {
+      // 有足够信息，直接开始分析或重新分析
+      if (extractedData.should_reanalyze) {
+        aiReply = `Great! I've updated your profile with the new information. Let me re-analyze and find better matches for you... 🔄`;
       } else {
-        aiReply = `Perfect! I have all the essential information. Starting analysis now... 🔄`;
+        // 显示当前信息并开始分析
+        let profileSummary = `Perfect! I have your information:\n\n`;
+        if (extractedData.current_major) profileSummary += `• Academic Background: ${extractedData.current_major}\n`;
+        if (extractedData.target_field) profileSummary += `• Target Program: ${extractedData.target_field}\n`;
+        if (extractedData.gpa_score) profileSummary += `• GPA: ${extractedData.gpa_score}\n`;
+        if (extractedData.language_test) profileSummary += `• Language Score: ${extractedData.language_test}\n`;
+        if (extractedData.preferred_countries && extractedData.preferred_countries.length > 0) {
+          profileSummary += `• Preferred Countries: ${extractedData.preferred_countries.join(', ')}\n`;
+        }
+        if (extractedData.additional_info) profileSummary += `• Additional Info: ${extractedData.additional_info}\n`;
+        
+        profileSummary += `\nStarting analysis now... 🔄`;
+        aiReply = profileSummary;
       }
-    } else if (extractedData.has_sufficient_info && extractedData.ready_to_analyze && extractedData.is_responding_to_specialized) {
-      // 用户明确要求分析且已回答专业问题
-      aiReply = `Perfect! Starting analysis... 🔄`;
-    } else if (extractedData.has_sufficient_info && extractedData.is_responding_to_specialized && !extractedData.ready_to_analyze) {
-      // 用户回答了专业问题但没有明确要求分析
-      aiReply = `Excellent! Thank you for providing those additional details about your ${extractedData.target_field} background.
-
-I now have a comprehensive understanding of your profile:
-• Academic Background: ${extractedData.current_major}
-• Target Program: ${extractedData.target_field}
-• GPA: ${extractedData.gpa_score}
-• Language Score: ${extractedData.language_test}
-• Preferred Countries: ${extractedData.preferred_countries?.join(', ')}
-
-With this information, I can provide you with highly personalized school recommendations and create a detailed application timeline.
-
-When you're ready to see your analysis results, just say "start analysis" or "analyze"! 🚀`;
-    } else if (extractedData.has_sufficient_info && !extractedData.needs_specialized_questions && !extractedData.ready_to_analyze) {
-      // 用户提供了基本信息，但专业不需要特殊问题，且没有明确要求分析
-      aiReply = `Perfect! I have all the essential information I need:
-
-• Academic Background: ${extractedData.current_major}
-• Target Program: ${extractedData.target_field}
-• GPA: ${extractedData.gpa_score}
-• Language Score: ${extractedData.language_test}
-• Preferred Countries: ${extractedData.preferred_countries?.join(', ')}
-
-Starting analysis now... 🔄`;
     } else {
       // 构建已获得信息的确认
       let confirmation = "";
@@ -339,10 +314,8 @@ Starting analysis now... 🔄`;
       reply: aiReply,
       extractedProfile: extractedData,
       hasBasicInfo: extractedData.has_sufficient_info,
-      shouldAnalyze: extractedData.has_sufficient_info && (
-        (extractedData.ready_to_analyze && extractedData.is_responding_to_specialized) || 
-        !extractedData.needs_specialized_questions
-      )
+      shouldAnalyze: extractedData.has_sufficient_info,
+      shouldReanalyze: extractedData.should_reanalyze || false
     });
 
   } catch (error) {

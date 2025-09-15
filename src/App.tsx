@@ -367,6 +367,13 @@ function App() {
         
         // If enough information is available, start analysis or re-analysis
         if (chatResponse.shouldAnalyze) {
+          // If this is a re-analysis, clear previous data
+          if (chatResponse.shouldReanalyze) {
+            setAnalysisId(null);
+            setSchoolsData(null);
+            setTimelineData(null);
+          }
+          
           setIsAnalyzing(true);
           setAnalysisProgress('analyzing');
           
@@ -430,9 +437,13 @@ function App() {
             setAnalysisProgress('complete');
 
             // Send completion message
+            const completionMessage = chatResponse.shouldReanalyze 
+              ? `Re-analysis complete! I've updated your recommendations based on your new information. Check out the updated results! 🎉`
+              : `Analysis complete! You can now view your personalized recommendations in the Safe Programs, Target Programs and Dream Programs tabs. 🎉`;
+              
             setMessages(prev => [...prev, {
               role: 'assistant',
-              content: `Analysis complete! You can now view your analysis results in the Safe Programs, Target Programs and Dream Programs tabs.`
+              content: completionMessage
             }]);
 
             // Auto-navigate to results page
